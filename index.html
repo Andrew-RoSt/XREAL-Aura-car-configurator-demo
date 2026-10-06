@@ -1,0 +1,1691 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corella Splat Configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* Layout: a dark studio "cyclorama" fills the page with the splat on its turntable; the Model panel (scan tools)
+     floats left, the Build panel (configurator) floats right; on phones they become bottom sheets behind two tabs.
+     One deliberate dark look: splats and paint read best against a studio backdrop. */
+  :root {
+    --bg: #0e0f11;
+    --card: rgba(22, 23, 26, 0.88);
+    --card-solid: #17181b;
+    --line: #2b2e33;
+    --fg: #efe9df;
+    --muted: #a39f96;
+    --sand: #c9b48a;
+    --sand-ink: #17130c;
+    --font-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1.45;
+    overflow: hidden;
+    background: radial-gradient(ellipse 70% 60% at 50% 60%, #2b2a27 0%, #17181a 48%, var(--bg) 100%), var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  #stage.dragging { cursor: grabbing; }
+  button, input, label.btn { font: inherit; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px));
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+  .brand { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; min-width: 0; }
+  .wordmark { font: 800 1.35rem/1 var(--font-display); font-stretch: 125%; letter-spacing: 0.14em; }
+  .wordmark b { color: var(--sand); font-weight: 800; }
+  .tag { font: 500 0.7rem/1.2 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+  /* ---------- floating panels ---------- */
+  .panel {
+    position: fixed;
+    top: calc(64px + env(safe-area-inset-top, 0px));
+    bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 1.1rem 1.15rem 1.25rem;
+    display: flex; flex-direction: column; gap: 1.05rem;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .panel-left { left: max(16px, env(safe-area-inset-left, 0px)); width: 18.5rem; }
+  .panel-right { right: max(16px, env(safe-area-inset-right, 0px)); width: 22rem; }
+  .panel > section { display: flex; flex-direction: column; gap: 0.55rem; }
+  .panel h2 { margin: 0; font: 800 1.05rem/1.1 var(--font-display); font-stretch: 112%; letter-spacing: 0.04em; text-transform: uppercase; }
+  .label { margin: 0; font: 600 0.68rem/1.2 var(--font-mono); letter-spacing: 0.13em; text-transform: uppercase; color: var(--sand); display: flex; justify-content: space-between; gap: 0.5rem; }
+  .label output, .label span { color: var(--muted); letter-spacing: 0.06em; }
+  .muted { color: var(--muted); margin: 0; font-size: 0.86rem; }
+  .model-name { margin: 0; font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; }
+  .status { margin: 0; font-size: 0.84rem; color: var(--muted); }
+  .status strong { color: var(--fg); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.62rem 0.85rem;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: rgba(239, 233, 223, 0.06);
+    color: var(--fg);
+    font-weight: 650; font-size: 0.88rem;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+  .btn:hover { background: rgba(239, 233, 223, 0.12); }
+  .btn:focus-visible, .swatch:focus-visible, .grade:focus-visible, .opt:focus-visible, input:focus-visible + .extra-name { outline: 2px solid var(--sand); outline-offset: 2px; }
+  .btn-primary { background: var(--sand); color: var(--sand-ink); border-color: var(--sand); }
+  .btn-primary:hover { background: #d8c49b; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .btn-row .btn { flex: 1 1 auto; }
+  .url { display: flex; gap: 0.4rem; }
+  .url input {
+    flex: 1; min-width: 0;
+    padding: 0.6rem 0.7rem; border-radius: 9px; border: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.35); color: var(--fg); font: 500 0.82rem var(--font-mono);
+  }
+  input[type="range"] { width: 100%; accent-color: var(--sand); }
+  .check { display: flex; align-items: center; gap: 0.55rem; font-size: 0.9rem; cursor: pointer; }
+  .check input { accent-color: var(--sand); width: 1.05rem; height: 1.05rem; }
+
+  /* ---------- configurator ---------- */
+  .grades { display: flex; flex-direction: column; gap: 0.45rem; }
+  .grade {
+    display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.6rem; text-align: left;
+    padding: 0.7rem 0.8rem; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(239, 233, 223, 0.04); color: var(--fg); cursor: pointer;
+  }
+  .grade-name { font-weight: 800; font-size: 1rem; font-stretch: 110%; }
+  .grade-price { grid-column: 2; grid-row: 1; font: 500 0.78rem var(--font-mono); color: var(--muted); align-self: center; }
+  .grade-note { grid-column: 1 / -1; font-size: 0.8rem; color: var(--muted); }
+  .grade[aria-pressed="true"] { border-color: var(--sand); background: rgba(201, 180, 138, 0.12); box-shadow: inset 3px 0 0 var(--sand); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .swatch {
+    width: 2.4rem; height: 2.4rem; border-radius: 50%; cursor: pointer; padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55), transparent 32%), var(--sw);
+  }
+  .swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--card-solid), 0 0 0 5px var(--sand); }
+  .opts { display: flex; flex-direction: column; gap: 0.35rem; }
+  .opt {
+    display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; text-align: left;
+    padding: 0.6rem 0.75rem; border-radius: 9px; border: 1px solid var(--line);
+    background: rgba(239, 233, 223, 0.04); color: var(--fg); cursor: pointer; font-weight: 600; font-size: 0.9rem;
+  }
+  .opt[aria-pressed="true"] { border-color: var(--sand); background: rgba(201, 180, 138, 0.12); }
+  .opt-price { font: 500 0.76rem var(--font-mono); color: var(--muted); white-space: nowrap; }
+  .extras { display: grid; grid-template-columns: 1fr; gap: 0.3rem; }
+  .extra { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.2rem; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid rgba(43, 46, 51, 0.7); }
+  .extra input { accent-color: var(--sand); width: 1.05rem; height: 1.05rem; flex: none; }
+  .extra-name { flex: 1; }
+  .summary { border-top: 1px solid var(--line); padding-top: 0.9rem; gap: 0.35rem !important; }
+  .price { margin: 0; font: 600 1.9rem/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .note {
+    margin: 0; font-size: 0.8rem; color: var(--muted);
+    border: 1px dashed rgba(201, 180, 138, 0.45); border-radius: 9px; padding: 0.55rem 0.7rem;
+  }
+
+  /* ---------- bottom bits ---------- */
+  .stats {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    margin: 0; font: 500 0.72rem/1.2 var(--font-mono); letter-spacing: 0.04em; color: var(--muted);
+    white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums;
+  }
+  .tabs { display: none; }
+  .drop {
+    position: fixed; inset: 12px; border: 2px dashed var(--sand); border-radius: 18px;
+    display: grid; place-items: center; background: rgba(14, 15, 17, 0.7);
+    font: 800 1.4rem var(--font-display); font-stretch: 115%; letter-spacing: 0.06em; text-transform: uppercase; pointer-events: none;
+  }
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100% - 32px); box-sizing: border-box;
+    background: var(--sand); color: var(--sand-ink); font-weight: 650; font-size: 0.88rem;
+    padding: 0.6rem 0.9rem; border-radius: 9px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  body.in-xr .panel, body.in-xr .tabs { display: none !important; }
+
+  @media (max-width: 900px) {
+    .panel { display: none; top: auto; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); left: 12px !important; right: 12px !important; width: auto; max-height: 58vh; }
+    body[data-sheet="model"] .panel-left, body[data-sheet="build"] .panel-right { display: flex; }
+    .tabs {
+      position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      display: flex; gap: 0.5rem;
+    }
+    .tabs .btn { flex: 1; background: var(--card-solid); }
+    .tabs .btn[aria-pressed="true"] { border-color: var(--sand); color: var(--sand); }
+    .stats { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+    body[data-sheet="model"] .stats, body[data-sheet="build"] .stats { display: none; }
+    .tag { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+</style>
+
+</head>
+<body>
+<canvas id="stage" aria-label="3D view of the vehicle. Drag to orbit, scroll or pinch to zoom, right-drag to pan."></canvas>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="wordmark">CORELLA <b>DC</b></span>
+    <span class="tag">Configurator concept · Gaussian splat viewer</span>
+  </div>
+  <button class="btn btn-primary" id="btnXR" type="button" hidden>View in glasses</button>
+</header>
+
+<aside class="panel panel-left" id="modelPanel" aria-label="Model">
+  <h2>Model</h2>
+  <section>
+    <p class="model-name" id="modelName">Demo ute</p>
+    <div class="btn-row">
+      <label class="btn btn-primary" for="fileInput">Open splat file</label>
+      <input type="file" id="fileInput" accept=".ply,.splat,.spz" hidden>
+      <button class="btn" id="btnDemo" type="button" hidden>Back to demo ute</button>
+    </div>
+    <form class="url" id="urlForm">
+      <input id="urlInput" type="url" inputmode="url" placeholder="https://…/scan.ply" aria-label="Link to a splat file">
+      <button class="btn" type="submit">Load</button>
+    </form>
+    <p class="muted">.ply, .splat or .spz. You can also drop a file onto the page.</p>
+    <p class="status" id="modelStatus" role="status">Starting…</p>
+  </section>
+  <section>
+    <p class="label">Orientation</p>
+    <div class="btn-row">
+      <button class="btn" id="rotX" type="button" title="Rotate 90° about X">X 90°</button>
+      <button class="btn" id="rotY" type="button" title="Rotate 90° about the vertical axis">Y 90°</button>
+      <button class="btn" id="rotZ" type="button" title="Rotate 90° about Z">Z 90°</button>
+      <button class="btn" id="flip" type="button">Flip</button>
+    </div>
+  </section>
+  <section>
+    <p class="label"><label for="scaleRange">Size</label><output id="scaleOut">×1.00</output></p>
+    <input type="range" id="scaleRange" min="-3" max="3" step="0.05" value="0">
+    <button class="btn" id="btnFit" type="button">Fit to 5.3 m long</button>
+  </section>
+  <section>
+    <p class="label"><label for="cropRange">Trim surroundings</label><output id="cropOut">Off</output></p>
+    <input type="range" id="cropRange" min="0" max="15" step="0.1" value="0">
+    <p class="label"><label for="floorRange">Trim floor</label><output id="floorOut">Off</output></p>
+    <input type="range" id="floorRange" min="0" max="0.6" step="0.01" value="0">
+  </section>
+  <section>
+    <p class="label">View</p>
+    <label class="check"><input type="checkbox" id="turntable"> Turntable</label>
+    <button class="btn" id="btnReset" type="button">Reset view</button>
+    <p class="status" id="xrStatus">Checking for glasses…</p>
+  </section>
+</aside>
+
+<aside class="panel panel-right" id="buildPanel" aria-label="Build">
+  <h2>Build</h2>
+  <section>
+    <p class="label">Grade</p>
+    <div class="grades" id="gradeList"></div>
+  </section>
+  <section>
+    <p class="label">Paint <span id="paintName"></span></p>
+    <div class="swatches" id="paintList"></div>
+  </section>
+  <section>
+    <p class="label">Wheels</p>
+    <div class="opts" id="wheelList"></div>
+  </section>
+  <section>
+    <p class="label">Accessories</p>
+    <div class="extras" id="extraList"></div>
+  </section>
+  <p class="note" id="scanNote" hidden>On a scanned vehicle these options are a mock-up. Each one needs its own scanned or modelled part before it can change the scan.</p>
+  <section class="summary">
+    <p class="label">Estimated drive-away</p>
+    <p class="price" id="price">$0</p>
+    <p class="muted" id="priceNote">Concept pricing for illustration only.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnSave" type="button">Save build</button>
+      <button class="btn" id="btnShare" type="button">Share</button>
+    </div>
+  </section>
+</aside>
+
+<p class="stats" id="stats"></p>
+<nav class="tabs" aria-label="Panels">
+  <button class="btn" type="button" data-sheet="model" aria-pressed="false">Model</button>
+  <button class="btn" type="button" data-sheet="build" aria-pressed="false">Build</button>
+</nav>
+<div class="drop" id="drop" hidden>Drop to load the splat</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+'use strict';
+/* ---------------- maths ---------------- */
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const TAU = Math.PI * 2;
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vmul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = (a) => Math.hypot(a[0], a[1], a[2]);
+const vnorm = (a) => { const l = vlen(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+const M4 = {
+  ident() { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; },
+  mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    return o;
+  },
+  invert(a) {
+    const o = new Float32Array(16);
+    const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3], a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+    const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11], a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+    const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10;
+    const b03 = a01 * a12 - a02 * a11, b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12;
+    const b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30, b08 = a20 * a33 - a23 * a30;
+    const b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+    let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+    if (!det) return M4.ident();
+    det = 1 / det;
+    o[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det; o[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+    o[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det; o[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+    o[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det; o[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+    o[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det; o[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+    o[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det; o[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+    o[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det; o[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+    o[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det; o[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+    o[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det; o[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+    return o;
+  },
+  persp(fovy, aspect, n, f) { const t = 1 / Math.tan(fovy / 2), nf = 1 / (n - f), m = new Float32Array(16); m[0] = t / aspect; m[5] = t; m[10] = (f + n) * nf; m[11] = -1; m[14] = 2 * f * n * nf; return m; },
+  lookAt(e, t, u) {
+    const z = vnorm(vsub(e, t)), x = vnorm(vcross(u, z)), y = vcross(z, x), m = new Float32Array(16);
+    m[0] = x[0]; m[1] = y[0]; m[2] = z[0]; m[4] = x[1]; m[5] = y[1]; m[6] = z[1]; m[8] = x[2]; m[9] = y[2]; m[10] = z[2];
+    m[12] = -vdot(x, e); m[13] = -vdot(y, e); m[14] = -vdot(z, e); m[15] = 1;
+    return m;
+  },
+  trans(x, y, z) { const m = M4.ident(); m[12] = x; m[13] = y; m[14] = z; return m; },
+  scale(s) { const m = M4.ident(); m[0] = m[5] = m[10] = s; return m; },
+  rotX(a) { const c = Math.cos(a), s = Math.sin(a), m = M4.ident(); m[5] = c; m[6] = s; m[9] = -s; m[10] = c; return m; },
+  rotY(a) { const c = Math.cos(a), s = Math.sin(a), m = M4.ident(); m[0] = c; m[2] = -s; m[8] = s; m[10] = c; return m; },
+  rotZ(a) { const c = Math.cos(a), s = Math.sin(a), m = M4.ident(); m[0] = c; m[1] = s; m[4] = -s; m[5] = c; return m; },
+  apply(m, v) { return [m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12], m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13], m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14]]; },
+  dir(m, v) { return [m[0] * v[0] + m[4] * v[1] + m[8] * v[2], m[1] * v[0] + m[5] * v[1] + m[9] * v[2], m[2] * v[0] + m[6] * v[1] + m[10] * v[2]]; },
+};
+function quatRotate(q, v) {
+  const [qx, qy, qz, qw] = q;
+  const tx = 2 * (qy * v[2] - qz * v[1]), ty = 2 * (qz * v[0] - qx * v[2]), tz = 2 * (qx * v[1] - qy * v[0]);
+  return [v[0] + qw * tx + (qy * tz - qz * ty), v[1] + qw * ty + (qz * tx - qx * tz), v[2] + qw * tz + (qx * ty - qy * tx)];
+}
+
+/* ---------------- half floats ---------------- */
+const _f32 = new Float32Array(1), _u32 = new Uint32Array(_f32.buffer);
+function toHalf(v) {
+  _f32[0] = v;
+  const x = _u32[0];
+  const sign = (x >>> 16) & 0x8000;
+  const e = ((x >>> 23) & 0xff) - 112;
+  const m = x & 0x7fffff;
+  if (e <= 0) { if (e < -10) return sign; const mm = (m | 0x800000) >> (1 - e); return sign | ((mm + 0x1000) >> 13); }
+  if (e >= 31) return sign | 0x7c00;
+  return sign | ((e << 10) + ((m + 0x1000) >> 13));
+}
+const pack2 = (a, b) => (toHalf(a) | (toHalf(b) << 16)) >>> 0;
+
+/* ---------------- splat sets ----------------
+   GPU layout: RGBA32UI texture, 2048 texels wide, two texels per splat.
+   texel 0: position xyz (float bits), colour rgba8
+   texel 1: half(scale x, y), half(scale z, quat w), half(quat x, y), half(quat z, group) */
+const TEX_W = 2048, PER_ROW = TEX_W / 2;
+function makeSplatSet(n, name) {
+  const rows = Math.max(1, Math.ceil(n / PER_ROW));
+  const tex = new Uint32Array(TEX_W * rows * 4);
+  return { n, name, rows, tex, texF: new Float32Array(tex.buffer), pos: new Float32Array(n * 3), groups: false, conv: M4.ident() };
+}
+// q = [x, y, z, w]; scale linear; rgba bytes; group 0..255
+function setSplat(S, i, x, y, z, sx, sy, sz, qx, qy, qz, qw, r, g, b, a, group) {
+  const ql = Math.hypot(qx, qy, qz, qw) || 1;
+  qx /= ql; qy /= ql; qz /= ql; qw /= ql;
+  const o = i * 8;
+  S.texF[o] = x; S.texF[o + 1] = y; S.texF[o + 2] = z;
+  S.tex[o + 3] = (r | (g << 8) | (b << 16) | (a << 24)) >>> 0;
+  S.tex[o + 4] = pack2(sx, sy);
+  S.tex[o + 5] = pack2(sz, qw);
+  S.tex[o + 6] = pack2(qx, qy);
+  S.tex[o + 7] = pack2(qz, group || 0);
+  S.pos[i * 3] = x; S.pos[i * 3 + 1] = y; S.pos[i * 3 + 2] = z;
+}
+const clampByte = (v) => (v <= 0 ? 0 : v >= 1 ? 255 : Math.round(v * 255));
+const SH_C0 = 0.28209479177387814;
+const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+
+/* ---------------- file loaders: .ply (3DGS), .splat, .spz ---------------- */
+const PLY_TYPES = {
+  char: ['getInt8', 1], int8: ['getInt8', 1], uchar: ['getUint8', 1], uint8: ['getUint8', 1],
+  short: ['getInt16', 2], int16: ['getInt16', 2], ushort: ['getUint16', 2], uint16: ['getUint16', 2],
+  int: ['getInt32', 4], int32: ['getInt32', 4], uint: ['getUint32', 4], uint32: ['getUint32', 4],
+  float: ['getFloat32', 4], float32: ['getFloat32', 4], double: ['getFloat64', 8], float64: ['getFloat64', 8],
+};
+function findHeaderEnd(bytes) {
+  const pat = [101, 110, 100, 95, 104, 101, 97, 100, 101, 114]; // "end_header"
+  const lim = Math.min(bytes.length, 200000);
+  for (let i = 0; i < lim; i++) {
+    let ok = true;
+    for (let j = 0; j < pat.length; j++) if (bytes[i + j] !== pat[j]) { ok = false; break; }
+    if (ok) { let k = i + pat.length; while (k < bytes.length && bytes[k] !== 10) k++; return [i, k + 1]; }
+  }
+  return null;
+}
+function parsePLY(buf, name) {
+  const bytes = new Uint8Array(buf);
+  const he = findHeaderEnd(bytes);
+  if (!he) throw new Error('This doesn’t look like a PLY file (no header found).');
+  const header = new TextDecoder().decode(bytes.subarray(0, he[0]));
+  const lines = header.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines[0] !== 'ply') throw new Error('This doesn’t look like a PLY file.');
+  const fmt = (lines.find((l) => l.startsWith('format')) || '').split(/\s+/)[1];
+  if (fmt !== 'binary_little_endian') throw new Error('Only binary PLY files are supported (this one is ' + (fmt || 'unknown') + ').');
+  const elements = [];
+  for (const l of lines) {
+    const p = l.split(/\s+/);
+    if (p[0] === 'element') elements.push({ name: p[1], count: parseInt(p[2], 10), props: [] });
+    else if (p[0] === 'property' && elements.length) {
+      if (p[1] === 'list') throw new Error('PLY files with list properties (meshes) aren’t splats.');
+      const t = PLY_TYPES[p[1]];
+      if (!t) throw new Error('Unsupported PLY property type: ' + p[1]);
+      elements[elements.length - 1].props.push({ name: p[2], getter: t[0], size: t[1] });
+    }
+  }
+  if (elements.some((e) => e.name === 'chunk') || elements.some((e) => e.props.some((p) => p.name === 'packed_position')))
+    throw new Error('Compressed PLY (SuperSplat compressed export) isn’t supported yet. Export an uncompressed .ply, or a .splat / .spz.');
+  let offset = he[1];
+  let vert = null;
+  for (const e of elements) {
+    let o = 0;
+    for (const p of e.props) { p.offset = o; o += p.size; }
+    e.stride = o;
+    if (e.name === 'vertex') { vert = e; break; }
+    offset += e.count * e.stride;
+  }
+  if (!vert) throw new Error('No vertex data in this PLY file.');
+  const n = vert.count, stride = vert.stride;
+  if (offset + n * stride > buf.byteLength) throw new Error('The PLY file is shorter than its header says (truncated download?).');
+  const P = {};
+  for (const p of vert.props) P[p.name] = p;
+  const need = (k) => P[k] !== undefined;
+  if (!need('x') || !need('y') || !need('z')) throw new Error('PLY file has no x/y/z positions.');
+  const hasDC = need('f_dc_0'), hasRGB = need('red');
+  const hasScale = need('scale_0'), hasRot = need('rot_0'), hasOp = need('opacity');
+  const S = makeSplatSet(n, name);
+  const allFloat = vert.props.every((p) => p.getter === 'getFloat32');
+  let get;
+  if (allFloat) {
+    const f = new Float32Array(buf.slice(offset, offset + n * stride));
+    const sw = stride / 4;
+    get = (i, p) => f[i * sw + p.offset / 4];
+  } else {
+    const dv = new DataView(buf);
+    get = (i, p) => dv[p.getter](offset + i * stride + p.offset, true);
+  }
+  const pick = (k) => P[k];
+  const px = pick('x'), py = pick('y'), pz = pick('z');
+  const d0 = pick('f_dc_0'), d1 = pick('f_dc_1'), d2 = pick('f_dc_2');
+  const r0 = pick('red'), g0 = pick('green'), b0 = pick('blue');
+  const s0 = pick('scale_0'), s1 = pick('scale_1'), s2 = pick('scale_2');
+  const q0 = pick('rot_0'), q1 = pick('rot_1'), q2 = pick('rot_2'), q3 = pick('rot_3');
+  const op = pick('opacity');
+  const rgbScale = hasRGB && r0.size === 1 ? 1 / 255 : 1;
+  for (let i = 0; i < n; i++) {
+    let r = 0.6, g = 0.6, b = 0.6;
+    if (hasDC) { r = 0.5 + SH_C0 * get(i, d0); g = 0.5 + SH_C0 * get(i, d1); b = 0.5 + SH_C0 * get(i, d2); }
+    else if (hasRGB) { r = get(i, r0) * rgbScale; g = get(i, g0) * rgbScale; b = get(i, b0) * rgbScale; }
+    const a = hasOp ? sigmoid(get(i, op)) : 1;
+    const sx = hasScale ? Math.exp(get(i, s0)) : 0.01, sy = hasScale ? Math.exp(get(i, s1)) : 0.01, sz = hasScale ? Math.exp(get(i, s2)) : 0.01;
+    // 3DGS stores rot_0..3 as w, x, y, z
+    const qw = hasRot ? get(i, q0) : 1, qx = hasRot ? get(i, q1) : 0, qy = hasRot ? get(i, q2) : 0, qz = hasRot ? get(i, q3) : 0;
+    setSplat(S, i, get(i, px), get(i, py), get(i, pz), sx, sy, sz, qx, qy, qz, qw, clampByte(r), clampByte(g), clampByte(b), clampByte(a), 0);
+  }
+  S.conv = M4.rotX(Math.PI); // most 3DGS PLYs are y-down (OpenCV / COLMAP)
+  return S;
+}
+function parseSPLAT(buf, name) {
+  const n = Math.floor(buf.byteLength / 32);
+  if (!n || buf.byteLength % 32 !== 0) throw new Error('This .splat file has an unexpected size.');
+  const f = new Float32Array(buf, 0, (n * 32) / 4);
+  const u = new Uint8Array(buf);
+  const S = makeSplatSet(n, name);
+  for (let i = 0; i < n; i++) {
+    const fo = i * 8, bo = i * 32;
+    // rotation bytes are w, x, y, z mapped from [-1, 1]
+    setSplat(S, i, f[fo], f[fo + 1], f[fo + 2], f[fo + 3], f[fo + 4], f[fo + 5],
+      (u[bo + 29] - 128) / 128, (u[bo + 30] - 128) / 128, (u[bo + 31] - 128) / 128, (u[bo + 28] - 128) / 128,
+      u[bo + 24], u[bo + 25], u[bo + 26], u[bo + 27], 0);
+  }
+  S.conv = M4.rotX(Math.PI);
+  return S;
+}
+async function gunzip(buf) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('This browser can’t unzip .spz files. Try an up-to-date Chrome.');
+  const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).arrayBuffer();
+}
+async function parseSPZ(buf, name) {
+  const head = new Uint8Array(buf, 0, 2);
+  const raw = head[0] === 0x1f && head[1] === 0x8b ? await gunzip(buf) : buf;
+  const dv = new DataView(raw);
+  if (dv.getUint32(0, true) !== 0x5053474e) throw new Error('This doesn’t look like an .spz file.');
+  const version = dv.getUint32(4, true), n = dv.getUint32(8, true), frac = dv.getUint8(13);
+  if (version < 2 || version > 3) throw new Error('.spz version ' + version + ' isn’t supported yet (versions 2 and 3 are). Export as .ply instead.');
+  const u = new Uint8Array(raw);
+  let o = 16;
+  const posO = o; o += n * 9;
+  const alphaO = o; o += n;
+  const colO = o; o += n * 3;
+  const scaleO = o; o += n * 3;
+  const rotO = o; o += n * (version >= 3 ? 4 : 3);
+  if (o > raw.byteLength) throw new Error('The .spz file is truncated.');
+  const S = makeSplatSet(n, name);
+  const fs = 1 / (1 << frac);
+  const int24 = (p) => { let v = u[p] | (u[p + 1] << 8) | (u[p + 2] << 16); if (v & 0x800000) v |= 0xff000000; return v; };
+  const q = [0, 0, 0, 0];
+  for (let i = 0; i < n; i++) {
+    const pp = posO + i * 9;
+    const x = int24(pp) * fs, y = int24(pp + 3) * fs, z = int24(pp + 6) * fs;
+    const a = u[alphaO + i];
+    const col = (k) => clampByte(0.5 + SH_C0 * ((u[colO + i * 3 + k] / 255 - 0.5) / 0.15));
+    const sc = (k) => Math.exp(u[scaleO + i * 3 + k] / 16 - 10);
+    if (version >= 3) {
+      // "smallest three": top 2 bits name the largest component, then three 9-bit magnitudes with sign bits
+      const rp = rotO + i * 4;
+      let comp = (u[rp] | (u[rp + 1] << 8) | (u[rp + 2] << 16) | (u[rp + 3] << 24)) >>> 0;
+      const iLargest = comp >>> 30;
+      let sum = 0;
+      for (let k = 3; k >= 0; k--) {
+        if (k === iLargest) continue;
+        const mag = comp & 511, neg = (comp >>> 9) & 1;
+        comp >>>= 10;
+        q[k] = Math.SQRT1_2 * (mag / 511) * (neg ? -1 : 1);
+        sum += q[k] * q[k];
+      }
+      q[iLargest] = Math.sqrt(Math.max(0, 1 - sum));
+    } else {
+      const rp = rotO + i * 3;
+      q[0] = u[rp] / 127.5 - 1; q[1] = u[rp + 1] / 127.5 - 1; q[2] = u[rp + 2] / 127.5 - 1;
+      q[3] = Math.sqrt(Math.max(0, 1 - q[0] * q[0] - q[1] * q[1] - q[2] * q[2]));
+    }
+    setSplat(S, i, x, y, z, sc(0), sc(1), sc(2), q[0], q[1], q[2], q[3], col(0), col(1), col(2), a, 0);
+  }
+  S.conv = M4.ident(); // .spz is stored right-up-back, like WebGL
+  return S;
+}
+async function parseSplatFile(buf, name) {
+  const lower = (name || '').toLowerCase();
+  const b = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+  if (lower.endsWith('.spz') || (b[0] === 0x1f && b[1] === 0x8b)) return parseSPZ(buf, name);
+  if (b[0] === 0x70 && b[1] === 0x6c && b[2] === 0x79) return parsePLY(buf, name);
+  if (lower.endsWith('.splat')) return parseSPLAT(buf, name);
+  if (lower.endsWith('.ksplat') || lower.endsWith('.sog') || lower.endsWith('.rad')) throw new Error('That format isn’t supported yet. Use .ply, .splat or .spz.');
+  return parseSPLAT(buf, name);
+}
+
+/* ---------------- WebGL2 renderer ---------------- */
+const canvas = document.getElementById('stage');
+const gl = canvas.getContext('webgl2', { xrCompatible: true, antialias: false, alpha: true, premultipliedAlpha: true });
+
+function compile(vs, fs) {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error('shader: ' + gl.getShaderInfoLog(s));
+    gl.attachShader(p, s);
+  }
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(p));
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name] = gl.getUniformLocation(p, info.name); }
+  return { p, u };
+}
+
+const R = { splat: null, disc: null, panel: null, line: null };
+function buildPrograms() {
+  // Each splat is an instanced quad. The 3D covariance comes from scale + rotation, is projected with the
+  // perspective Jacobian into a 2D ellipse, and the quad is stretched along the ellipse's axes.
+  R.splat = compile(`#version 300 es
+precision highp float; precision highp int; precision highp usampler2D;
+uniform usampler2D uTex;
+uniform mat4 uProj; uniform mat4 uView; uniform mat4 uFit;
+uniform vec2 uFocal; uniform vec2 uViewport;
+uniform vec3 uPaint; uniform vec3 uTrim; uniform float uTrimSpec;
+uniform int uHidden; uniform float uCrop; uniform float uFloorCut; uniform float uMaxPx;
+layout(location=0) in vec2 aCorner;
+layout(location=1) in uint aIndex;
+out vec4 vColor; out vec2 vPos;
+void cull() { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); vColor = vec4(0.0); vPos = vec2(0.0); }
+void main() {
+  ivec2 tc = ivec2(int((aIndex & 1023u) << 1), int(aIndex >> 10));
+  uvec4 t0 = texelFetch(uTex, tc, 0);
+  uvec4 t1 = texelFetch(uTex, tc + ivec2(1, 0), 0);
+  vec3 p = uintBitsToFloat(t0.xyz);
+  vec2 qzg = unpackHalf2x16(t1.w);
+  int group = int(qzg.y + 0.5);
+  if (group > 0 && ((uHidden >> group) & 1) == 1) { cull(); return; }
+  if (uCrop > 0.0 || uFloorCut > -1e3) {
+    vec3 f = (uFit * vec4(p, 1.0)).xyz;
+    if ((uCrop > 0.0 && length(f.xz) > uCrop) || f.y < uFloorCut) { cull(); return; }
+  }
+  vec4 cam = uView * vec4(p, 1.0);
+  vec4 clipPos = uProj * cam;
+  float lim = 1.2 * clipPos.w;
+  if (cam.z > -0.02 || clipPos.x < -lim || clipPos.x > lim || clipPos.y < -lim || clipPos.y > lim) { cull(); return; }
+  vec2 sxy = unpackHalf2x16(t1.x), szw = unpackHalf2x16(t1.y), qxy = unpackHalf2x16(t1.z);
+  vec4 q = normalize(vec4(qxy, qzg.x, szw.y));
+  float x = q.x, y = q.y, z = q.z, w = q.w;
+  mat3 Rm = mat3(
+    1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y + w * z), 2.0 * (x * z - w * y),
+    2.0 * (x * y - w * z), 1.0 - 2.0 * (x * x + z * z), 2.0 * (y * z + w * x),
+    2.0 * (x * z + w * y), 2.0 * (y * z - w * x), 1.0 - 2.0 * (x * x + y * y));
+  mat3 Mm = Rm * mat3(sxy.x, 0.0, 0.0, 0.0, sxy.y, 0.0, 0.0, 0.0, szw.x);
+  mat3 Sigma = Mm * transpose(Mm);
+  float tz = cam.z;
+  mat3 J = mat3(-uFocal.x / tz, 0.0, 0.0, 0.0, -uFocal.y / tz, 0.0, uFocal.x * cam.x / (tz * tz), uFocal.y * cam.y / (tz * tz), 0.0);
+  mat3 T = J * mat3(uView);
+  mat3 C = T * Sigma * transpose(T);
+  float a = C[0][0] + 0.3, b = C[0][1], c = C[1][1] + 0.3;
+  float mid = 0.5 * (a + c);
+  float rad = length(vec2(0.5 * (a - c), b));
+  float l1 = mid + rad, l2 = max(mid - rad, 0.1);
+  vec2 dv = abs(b) > 1e-8 ? normalize(vec2(b, l1 - a)) : (a >= c ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
+  vec2 major = min(sqrt(2.0 * l1), uMaxPx) * dv;
+  vec2 minor = min(sqrt(2.0 * l2), uMaxPx) * vec2(dv.y, -dv.x);
+  uint cw = t0.w;
+  vec4 col = vec4(float(cw & 255u), float((cw >> 8) & 255u), float((cw >> 16) & 255u), float(cw >> 24)) / 255.0;
+  if (group == 1) col.rgb = uPaint * col.r + vec3(col.g);
+  else if (group == 12) col.rgb = uTrim * col.r + vec3(col.g * uTrimSpec);
+  vColor = col;
+  vPos = aCorner;
+  vec2 center = clipPos.xy / clipPos.w;
+  gl_Position = vec4(center + (aCorner.x * major + aCorner.y * minor) * 2.0 / uViewport, 0.0, 1.0);
+}`, `#version 300 es
+precision highp float;
+in vec4 vColor; in vec2 vPos;
+out vec4 o;
+void main() {
+  float A = -dot(vPos, vPos);
+  if (A < -4.0) discard;
+  float B = exp(A) * vColor.a;
+  if (B < 1.0 / 255.0) discard;
+  o = vec4(vColor.rgb * B, B);
+}`);
+
+  // turntable ring + soft contact shadow, lying on the stage floor
+  R.disc = compile(`#version 300 es
+layout(location=0) in vec2 aCorner;
+uniform mat4 uProj; uniform mat4 uView; uniform float uRadius;
+out vec2 vUV;
+void main() { vUV = aCorner; gl_Position = uProj * uView * vec4(aCorner.x * uRadius, 0.0, aCorner.y * uRadius, 1.0); }`, `#version 300 es
+precision mediump float;
+in vec2 vUV; uniform vec3 uColor; uniform float uShadow; uniform float uRing;
+out vec4 o;
+void main() {
+  float r = length(vUV);
+  if (r > 1.0) discard;
+  float ring = (exp(-pow((r - 0.92) / 0.012, 2.0)) * 0.7 + exp(-pow((r - 0.92) / 0.09, 2.0)) * 0.12) * uRing;
+  float shadow = (1.0 - smoothstep(0.05, 0.62, r)) * uShadow;
+  o = vec4(uColor * ring, clamp(ring + shadow, 0.0, 1.0));
+}`);
+
+  // in-glasses configurator panel
+  R.panel = compile(`#version 300 es
+layout(location=0) in vec2 aCorner;
+uniform mat4 uProj; uniform mat4 uView; uniform vec3 uC; uniform vec3 uR; uniform vec3 uU;
+out vec2 vUV;
+void main() { vUV = vec2(aCorner.x * 0.5 + 0.5, 0.5 - aCorner.y * 0.5); gl_Position = uProj * uView * vec4(uC + aCorner.x * uR + aCorner.y * uU, 1.0); }`, `#version 300 es
+precision mediump float;
+in vec2 vUV; uniform sampler2D uTex; uniform float uOpacity;
+out vec4 o;
+void main() { o = texture(uTex, vUV) * uOpacity; }`);
+
+  R.line = compile(`#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uProj; uniform mat4 uView;
+void main() { gl_Position = uProj * uView * vec4(aPos, 1.0); }`, `#version 300 es
+precision mediump float;
+uniform vec4 uColor; out vec4 o;
+void main() { o = uColor; }`);
+}
+
+const quadBuf = (() => { if (!gl) return null; const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW); return b; })();
+const splatCornerBuf = (() => { if (!gl) return null; const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-2, -2, 2, -2, -2, 2, 2, 2]), gl.STATIC_DRAW); return b; })();
+function quadVAO() {
+  const v = gl.createVertexArray(); gl.bindVertexArray(v);
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null); return v;
+}
+
+/* ---------------- GPU splat state + background depth sort ---------------- */
+const GPU = { tex: null, vao: null, idx: null, n: 0, drawN: 0, maxTex: 0 };
+const SORT_SRC = `
+let pos = null, n = 0, depth = null, keys = null;
+const counts = new Uint32Array(65536), starts = new Uint32Array(65536);
+onmessage = (e) => {
+  const d = e.data;
+  if (d.type === 'init') { pos = d.pos; n = d.n; depth = new Float32Array(n); keys = new Uint16Array(n); return; }
+  if (d.type !== 'sort' || !pos) return;
+  const v = d.row;
+  let min = Infinity, max = -Infinity;
+  for (let i = 0, j = 0; i < n; i++, j += 3) {
+    const z = v[0] * pos[j] + v[1] * pos[j + 1] + v[2] * pos[j + 2] + v[3];
+    depth[i] = z; if (z < min) min = z; if (z > max) max = z;
+  }
+  const k = 65535 / Math.max(1e-9, max - min);
+  counts.fill(0);
+  for (let i = 0; i < n; i++) { const key = ((depth[i] - min) * k) | 0; keys[i] = key; counts[key]++; }
+  starts[0] = 0;
+  for (let i = 1; i < 65536; i++) starts[i] = starts[i - 1] + counts[i - 1];
+  const out = new Uint32Array(n);
+  for (let i = 0; i < n; i++) out[starts[keys[i]]++] = i;
+  postMessage({ type: 'sorted', id: d.id, order: out }, [out.buffer]);
+};`;
+const sorter = { worker: null, busy: false, pending: null, last: null, gen: 0, ms: 0, t0: 0 };
+function initSorter() {
+  const url = URL.createObjectURL(new Blob([SORT_SRC], { type: 'text/javascript' }));
+  sorter.worker = new Worker(url);
+  sorter.worker.onmessage = (e) => {
+    const d = e.data;
+    sorter.busy = false;
+    sorter.ms = performance.now() - sorter.t0;
+    if (d.id === sorter.gen && d.order.length === GPU.n) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, GPU.idx);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, d.order);
+      GPU.drawN = GPU.n;
+    }
+    if (sorter.pending) { const r = sorter.pending; sorter.pending = null; postSort(r); }
+  };
+}
+function postSort(row) {
+  sorter.busy = true; sorter.last = row; sorter.t0 = performance.now();
+  sorter.worker.postMessage({ type: 'sort', id: sorter.gen, row });
+}
+function requestSort(mv) {
+  if (!GPU.n) return;
+  const row = [mv[2], mv[6], mv[10], mv[14]];
+  const L = sorter.last;
+  if (L && !sorter.pending && Math.abs(L[0] - row[0]) + Math.abs(L[1] - row[1]) + Math.abs(L[2] - row[2]) < 2e-4 && Math.abs(L[3] - row[3]) < 2e-3) return;
+  if (sorter.busy) { sorter.pending = row; return; }
+  postSort(row);
+}
+function uploadSplats(S) {
+  if (S.rows > GPU.maxTex) throw new Error(`This scan has ${S.n.toLocaleString()} splats, more than this device’s graphics can hold (${(GPU.maxTex * PER_ROW).toLocaleString()}).`);
+  if (!GPU.tex) GPU.tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, GPU.tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32UI, TEX_W, S.rows, 0, gl.RGBA_INTEGER, gl.UNSIGNED_INT, S.tex);
+  if (!GPU.vao) {
+    GPU.vao = gl.createVertexArray();
+    gl.bindVertexArray(GPU.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, splatCornerBuf);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    GPU.idx = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, GPU.idx);
+    gl.enableVertexAttribArray(1); gl.vertexAttribIPointer(1, 1, gl.UNSIGNED_INT, 0, 0); gl.vertexAttribDivisor(1, 1);
+    gl.bindVertexArray(null);
+  }
+  const ident = new Uint32Array(S.n);
+  for (let i = 0; i < S.n; i++) ident[i] = i;
+  gl.bindBuffer(gl.ARRAY_BUFFER, GPU.idx);
+  gl.bufferData(gl.ARRAY_BUFFER, ident, gl.DYNAMIC_DRAW);
+  GPU.n = S.n; GPU.drawN = S.n;
+  sorter.gen++; sorter.last = null; sorter.pending = null; sorter.busy = false;
+  sorter.worker.postMessage({ type: 'init', pos: S.pos.slice(), n: S.n });
+}
+
+/* ---------------- procedural demo ute ----------------
+   A dual-cab ute sampled as ~70k flat Gaussians with studio lighting baked in.
+   Groups let the configurator recolour or hide parts:
+   1 paint, 2 bull bar, 3 light bar, 4 roof racks, 5 snorkel, 6 tub cover, 7 tow bar,
+   8 alloy wheel faces, 9 steel wheel faces, 10 all-terrain tread, 11 road tread, 12 trim (chrome/black) */
+const G = { BASE: 0, PAINT: 1, BULLBAR: 2, LIGHTBAR: 3, RACKS: 4, SNORKEL: 5, COVER: 6, TOWBAR: 7, ALLOY: 8, STEEL: 9, AT: 10, ROAD: 11, TRIM: 12 };
+
+function buildDemoUte() {
+  const rnd = mulberry(20261007);
+  const DS = 0.021;
+  const out = [];
+  const L1 = vnorm([0.45, 0.85, 0.35]), L2 = vnorm([-0.6, 0.4, -0.5]);
+  const shadeOf = (n, y) => (0.26 + 0.6 * Math.max(0, vdot(n, L1)) + 0.2 * Math.max(0, vdot(n, L2)) + 0.12 * n[1]) * (0.72 + 0.28 * clamp((y - 0.35) / 0.6, 0, 1));
+  const specOf = (n) => 0.45 * Math.pow(Math.max(0, n[1]), 10) + 0.28 * Math.pow(Math.max(0, vdot(n, L1)), 24);
+  const MAT = {
+    paint: { g: G.PAINT }, trim: { g: G.TRIM },
+    black: { c: [0.055, 0.055, 0.06], s: 0.06 }, satin: { c: [0.1, 0.1, 0.11], s: 0.1 },
+    glass: { c: [0.04, 0.05, 0.06], s: 0.3, glass: true }, rubber: { c: [0.05, 0.05, 0.05], s: 0.02 },
+    tub: { c: [0.13, 0.13, 0.14], s: 0.03 }, light: { c: [1.0, 0.97, 0.9], emit: true }, led: { c: [0.92, 0.96, 1.0], emit: true },
+    tail: { c: [0.75, 0.08, 0.06], s: 0.2 }, amber: { c: [0.95, 0.55, 0.1], s: 0.2 },
+    alloy: { c: [0.66, 0.68, 0.7], s: 0.45 }, steel: { c: [0.09, 0.09, 0.1], s: 0.1 }, brake: { c: [0.22, 0.22, 0.23], s: 0.05 },
+    grille: { c: [0.07, 0.07, 0.075], s: 0.05 }, under: { c: [0.03, 0.03, 0.03], s: 0 }, chrome: { c: [0.8, 0.82, 0.84], s: 0.7 },
+  };
+  function add(p, n, mk, grp) {
+    const m = MAT[mk];
+    if (!m) return;
+    const shade = shadeOf(n, p[1]);
+    let r, g, b, a = 245, group = grp || 0;
+    if (m.g) { group = grp || m.g; r = shade * 0.95; g = specOf(n) * (m.g === G.TRIM ? 1.0 : 1); b = 0; }
+    else if (m.emit) { [r, g, b] = m.c; a = 255; }
+    else {
+      const k = shade * (0.94 + rnd() * 0.12);
+      const sp = specOf(n) * m.s * 2;
+      r = m.c[0] * k + sp; g = m.c[1] * k + sp; b = m.c[2] * k + sp;
+      if (m.glass) { const sky = 0.03 + 0.12 * Math.max(0, n[1]) + 0.06 * Math.max(0, vdot(n, L1)); r += sky * 0.8; g += sky * 0.9; b += sky; a = 235; }
+    }
+    // quaternion turning the splat's thin z axis onto the surface normal
+    let q;
+    if (n[2] < -0.9999) q = [1, 0, 0, 0];
+    else q = [-n[1], n[0], 0, 1 + n[2]];
+    const st = DS * (0.76 + rnd() * 0.1);
+    out.push(p[0] + (rnd() - 0.5) * DS * 0.25, p[1] + (rnd() - 0.5) * DS * 0.25, p[2] + (rnd() - 0.5) * DS * 0.25,
+      st, st, 0.0035, q[0], q[1], q[2], q[3], clampByte(r), clampByte(g), clampByte(b), a, group);
+  }
+  // bilinear patch: corners c00 c10 c01 c11, outward hint flips the normal if needed
+  function patch(c00, c10, c01, c11, out_, mat, grp, fn) {
+    const lu = Math.max(vlen(vsub(c10, c00)), vlen(vsub(c11, c01))), lv = Math.max(vlen(vsub(c01, c00)), vlen(vsub(c11, c10)));
+    const nu = Math.max(1, Math.round(lu / DS)), nv = Math.max(1, Math.round(lv / DS));
+    for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) {
+      const s = clamp((i + (rnd() - 0.5) * 0.5) / nu, 0, 1), t = clamp((j + (rnd() - 0.5) * 0.5) / nv, 0, 1);
+      const a0 = vadd(vmul(c00, 1 - s), vmul(c10, s)), a1 = vadd(vmul(c01, 1 - s), vmul(c11, s));
+      const p = vadd(vmul(a0, 1 - t), vmul(a1, t));
+      const du = vsub(vadd(vmul(c10, 1 - t), vmul(c11, t)), vadd(vmul(c00, 1 - t), vmul(c01, t)));
+      const dv = vsub(a1, a0);
+      let n = vnorm(vcross(du, dv));
+      if (vdot(n, out_) < 0) n = vmul(n, -1);
+      const m = fn ? fn(p, n) : mat;
+      if (m) add(p, n, m, grp);
+    }
+  }
+  const rect = (o, u, v, ul, vl, out_, mat, grp, fn) => patch(o, vadd(o, vmul(u, ul)), vadd(o, vmul(v, vl)), vadd(vadd(o, vmul(u, ul)), vmul(v, vl)), out_, mat, grp, fn);
+  function tube(p0, p1, r, mat, grp) {
+    const d = vsub(p1, p0), L = vlen(d), a = vnorm(d);
+    const e1 = vnorm(vcross(a, Math.abs(a[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), e2 = vcross(a, e1);
+    const nl = Math.max(1, Math.round(L / DS)), nc = Math.max(6, Math.round(TAU * r / DS));
+    for (let i = 0; i <= nl; i++) for (let j = 0; j < nc; j++) {
+      const ang = (j + rnd() * 0.5) / nc * TAU;
+      const n = vadd(vmul(e1, Math.cos(ang)), vmul(e2, Math.sin(ang)));
+      add(vadd(vadd(p0, vmul(d, (i + rnd() * 0.5) / nl * (nl / (nl + 0.5)))), vmul(n, r)), n, mat, grp);
+    }
+  }
+  function annulus(c, nrm, r0, r1, a0, a1, mat, grp, fn) {
+    const e1 = vnorm(vcross(nrm, Math.abs(nrm[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), e2 = vcross(nrm, e1);
+    for (let r = Math.max(r0, DS * 0.3); r <= r1 + 1e-6; r += DS * 0.9) {
+      const nc = Math.max(6, Math.round((a1 - a0) * r / DS));
+      for (let j = 0; j < nc; j++) {
+        const ang = a0 + (j + rnd() * 0.6) / nc * (a1 - a0);
+        const p = vadd(c, vadd(vmul(e1, Math.cos(ang) * r), vmul(e2, Math.sin(ang) * r)));
+        const m = fn ? fn(r, ang, p) : mat;
+        if (m) add(p, nrm, m, grp);
+      }
+    }
+  }
+  function cylZ(cx, cy, z0, z1, r, a0, a1, inward, mat, grp, fn) {
+    const nl = Math.max(1, Math.round(Math.abs(z1 - z0) / DS)), nc = Math.max(6, Math.round((a1 - a0) * r / DS));
+    for (let i = 0; i <= nl; i++) for (let j = 0; j < nc; j++) {
+      const ang = a0 + (j + rnd() * 0.5) / nc * (a1 - a0);
+      const z = lerp(z0, z1, (i + rnd() * 0.4) / nl);
+      const d = [Math.cos(ang), Math.sin(ang), 0];
+      const p = [cx + d[0] * r, cy + d[1] * r, z];
+      const m = fn ? fn(ang, z, p) : mat;
+      if (m) add(p, inward ? vmul(d, -1) : d, m, grp);
+    }
+  }
+
+  const ZS = 0.93, ZG = 0.84, WF = [1.55, 0.385], WR = [-1.53, 0.385], ARCH = 0.47;
+  const inArch = (x, y) => Math.hypot(x - WF[0], y - WF[1]) < ARCH || Math.hypot(x - WR[0], y - WR[1]) < ARCH;
+  const sideTop = (x) => (x > 1.15 ? lerp(1.1, 1.0, (x - 1.15) / 1.43) : x < -0.5 ? 1.14 : 1.1);
+
+  // body sides with door shut lines and handles (trim)
+  for (const sz of [-1, 1]) {
+    const nl = Math.round(5.2 / DS);
+    for (let i = 0; i <= nl; i++) {
+      const x = -2.62 + (i + (rnd() - 0.5) * 0.5) / nl * 5.2;
+      const top = sideTop(x);
+      const nv = Math.round((top - 0.5) / DS);
+      for (let j = 0; j <= nv; j++) {
+        const y = 0.5 + (j + (rnd() - 0.5) * 0.5) / nv * (top - 0.5);
+        if (inArch(x, y)) continue;
+        let m = 'paint';
+        const shut = [1.15, 0.27, -0.45].some((sx) => Math.abs(x - sx) < 0.008) && y > 0.52;
+        if (shut) m = 'black';
+        if ((Math.abs(x - 0.47) < 0.07 || Math.abs(x + 0.18) < 0.07) && Math.abs(y - 1.0) < 0.022) m = 'trim';
+        if (x > 2.3 && y < 0.62) m = 'black';
+        if (x < -2.45 && y < 0.56) m = 'black';
+        add([x, y, sz * ZS], [0, 0, sz], m);
+      }
+    }
+    // wheel-arch flares and dark arch liners
+    for (const W of [WF, WR]) {
+      annulus([W[0], W[1], sz * (ZS + 0.012)], [0, 0, sz], ARCH, ARCH + 0.06, 0.04 * Math.PI, 0.96 * Math.PI, 'black');
+      cylZ(W[0], W[1], sz * 0.62, sz * ZS, ARCH, 0, Math.PI, true, 'under');
+    }
+    // side steps
+    rect([-0.45, 0.47, sz * ZS], [1, 0, 0], [0, 0, sz], 1.5, 0.09, [0, 1, 0], 'satin');
+    rect([-0.45, 0.42, sz * (ZS + 0.09)], [1, 0, 0], [0, 1, 0], 1.5, 0.05, [0, 0, sz], 'satin');
+    // belt ledge between the window plane and the body side
+    rect([-0.45, 1.1, sz * ZG], [1, 0, 0], [0, 0, sz], 1.6, ZS - ZG, [0, 1, 0], 'paint');
+    // side windows with B and C pillars
+    const xws = (y) => 1.15 - (y - 1.12) * (0.59 / 0.66);
+    const nw = Math.round(1.6 / DS), nh = Math.round(0.64 / DS);
+    for (let i = 0; i <= nw; i++) for (let j = 0; j <= nh; j++) {
+      const x = -0.43 + (i + rnd() * 0.5) / nw * 1.6, y = 1.12 + (j + rnd() * 0.5) / nh * 0.64;
+      if (x > xws(y)) continue;
+      let m = 'glass';
+      if (x < -0.34) m = 'paint';
+      else if (Math.abs(x - 0.24) < 0.05 || y > 1.735 || y < 1.14 || x > xws(y) - 0.03) m = 'black';
+      add([x, y, sz * ZG], [0, 0, sz], m);
+    }
+    // roof edge rounding
+    patch([0.56, 1.795, sz * 0.8], [-0.43, 1.8, sz * 0.8], [0.56, 1.76, sz * ZG], [-0.43, 1.765, sz * ZG], [0, 0.6, sz], 'paint');
+    // tub top rails
+    rect([-2.62, 1.14, sz * ZG], [1, 0, 0], [0, 0, sz], 2.12, ZS - ZG, [0, 1, 0], 'paint');
+    // tub inner walls
+    rect([-2.6, 0.76, sz * ZG], [1, 0, 0], [0, 1, 0], 2.08, 0.38, [0, 0, -sz], 'tub');
+    // mirrors
+    const mz = sz * 1.03;
+    rect([0.92, 1.18, mz - sz * 0.05], [1, 0, 0], [0, 1, 0], 0.2, 0.14, [0, 0, sz], 'trim');
+    rect([0.92, 1.32, mz - sz * 0.05], [1, 0, 0], [0, 0, sz], 0.2, 0.1, [0, 1, 0], 'paint');
+    rect([1.12, 1.18, mz - sz * 0.05], [0, 1, 0], [0, 0, sz], 0.14, 0.1, [1, 0, 0], 'paint');
+    rect([0.92, 1.18, mz - sz * 0.05], [0, 1, 0], [0, 0, sz], 0.14, 0.1, [-1, 0, 0], 'glass');
+    // edge between the front guard top and the bonnet
+    patch([1.15, 1.105, sz * 0.86], [2.52, 1.005, sz * 0.86], [1.15, 1.1, sz * ZS], [2.52, 1.0, sz * ZS], [0, 1, 0], 'paint');
+  }
+  // bonnet and nose
+  patch([1.15, 1.12, -0.86], [2.52, 1.02, -0.86], [1.15, 1.12, 0.86], [2.52, 1.02, 0.86], [0.1, 1, 0], 'paint');
+  patch([2.52, 1.02, -0.88], [2.63, 0.96, -0.88], [2.52, 1.02, 0.88], [2.63, 0.96, 0.88], [1, 1, 0], 'paint');
+  patch([2.63, 0.96, -0.9], [2.68, 0.86, -0.9], [2.63, 0.96, 0.9], [2.68, 0.86, 0.9], [1, 0.4, 0], 'paint');
+  // front face: grille, headlights, fog lights, bumper
+  rect([2.68, 0.34, -0.92], [0, 0, 1], [0, 1, 0], 1.84, 0.53, [1, 0, 0], null, 0, (p) => {
+    const az = Math.abs(p[2]), y = p[1];
+    if (az > 0.56 && y > 0.73) return az > 0.84 ? 'amber' : 'light';
+    if (az < 0.54 && y > 0.56 && y < 0.85) {
+      if (az > 0.5 || y < 0.6 || y > 0.81) return 'trim';
+      return (Math.floor(y / 0.035) % 2 === 0) ? 'grille' : 'satin';
+    }
+    if (y < 0.55) { if (az > 0.6 && az < 0.76 && y > 0.43 && y < 0.5) return 'light'; return 'black'; }
+    return 'paint';
+  });
+  rect([2.5, 0.34, -0.9], [1, 0, 0], [0, 0, 1], 0.18, 1.8, [0, -1, 0], 'under');
+  // windscreen with A-pillars and cowl
+  patch([1.15, 1.12, -0.82], [0.56, 1.78, -0.8], [1.15, 1.12, 0.82], [0.56, 1.78, 0.8], [1, 0.9, 0], null, 0, (p) => {
+    const az = Math.abs(p[2]);
+    if (az > 0.73) return 'paint';
+    if (p[1] < 1.15) return 'black';
+    return 'glass';
+  });
+  // roof
+  patch([0.56, 1.795, -0.8], [-0.43, 1.8, -0.8], [0.56, 1.795, 0.8], [-0.43, 1.8, 0.8], [0, 1, 0], 'paint');
+  // cab back wall with rear window
+  rect([-0.45, 1.1, -0.84], [0, 0, 1], [0, 1, 0], 1.68, 0.7, [-1, 0, 0], null, 0, (p) => (Math.abs(p[2]) < 0.55 && p[1] > 1.3 && p[1] < 1.72 ? 'glass' : 'paint'));
+  // tub floor (ribbed), front wall, tailgate
+  rect([-2.6, 0.76, -0.84], [1, 0, 0], [0, 0, 1], 2.08, 1.68, [0, 1, 0], null, 0, (p) => (Math.floor((p[2] + 1) / 0.12) % 2 ? 'tub' : 'satin'));
+  rect([-0.5, 0.76, -0.84], [0, 0, 1], [0, 1, 0], 1.68, 0.38, [-1, 0, 0], 'tub');
+  rect([-2.62, 0.5, -0.93], [0, 0, 1], [0, 1, 0], 1.86, 0.64, [-1, 0, 0], null, 0, (p) => {
+    const az = Math.abs(p[2]);
+    if (az > 0.79 && p[1] > 0.72 && p[1] < 1.08) return p[1] > 0.98 ? 'amber' : 'tail';
+    if (az < 0.16 && Math.abs(p[1] - 1.03) < 0.025) return 'trim';
+    return 'paint';
+  });
+  rect([-2.6, 0.76, -0.84], [0, 0, 1], [0, 1, 0], 1.68, 0.38, [1, 0, 0], 'tub');
+  rect([-2.62, 1.14, -0.93], [1, 0, 0], [0, 0, 1], 0.04, 1.86, [0, 1, 0], 'paint');
+  // rear step bumper (trim) and underbody
+  rect([-2.72, 0.38, -0.9], [0, 0, 1], [0, 1, 0], 1.8, 0.15, [-1, 0, 0], 'trim');
+  rect([-2.72, 0.53, -0.9], [1, 0, 0], [0, 0, 1], 0.1, 1.8, [0, 1, 0], 'trim');
+  for (let x = -2.6; x < 2.5; x += DS * 2) for (let z = -0.88; z <= 0.88; z += DS * 2) add([x, 0.46, z], [0, -1, 0], 'under');
+
+  // wheels
+  for (const W of [WF, WR]) for (const sz of [-1, 1]) {
+    const zc = sz * 0.775, zo = zc + sz * 0.13, zi = zc - sz * 0.13;
+    cylZ(W[0], W[1], zi, zo, 0.385, 0, TAU, false, 'rubber', G.ROAD, (ang) => (Math.floor(ang / TAU * 90) % 3 === 0 ? 'satin' : 'rubber'));
+    cylZ(W[0], W[1], zi, zo, 0.398, 0, TAU, false, 'rubber', G.AT, (ang, z) => {
+      const block = (Math.floor(ang / TAU * 44) + (Math.abs(z - zc) > 0.05 ? 1 : 0)) % 2 === 0;
+      return block ? 'rubber' : 'under';
+    });
+    annulus([W[0], W[1], zo], [0, 0, sz], 0.255, 0.39, 0, TAU, 'rubber', 0, (r) => (r > 0.33 && r < 0.345 ? 'satin' : 'rubber'));
+    annulus([W[0], W[1], zi], [0, 0, -sz], 0.255, 0.39, 0, TAU, 'under');
+    annulus([W[0], W[1], zc + sz * 0.02], [0, 0, sz], 0.05, 0.2, 0, TAU, 'brake');
+    annulus([W[0], W[1], zo - sz * 0.012], [0, 0, sz], 0.02, 0.255, 0, TAU, 'alloy', G.ALLOY, (r, ang) => {
+      if (r > 0.225) return 'alloy';
+      if (r < 0.055) return 'satin';
+      const k = ((ang / TAU) * 6) % 1;
+      return Math.abs(k - 0.5) < 0.12 + 0.05 * (r / 0.22) ? 'alloy' : null;
+    });
+    annulus([W[0], W[1], zo - sz * 0.01], [0, 0, sz], 0.02, 0.255, 0, TAU, 'steel', G.STEEL, (r, ang, p) => {
+      if (r < 0.06) return 'chrome';
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; if (Math.hypot(p[0] - (W[0] + Math.cos(a) * 0.16), p[1] - (W[1] + Math.sin(a) * 0.16)) < 0.035) return null; }
+      return 'steel';
+    });
+  }
+
+  // ---- accessories ----
+  // bull bar
+  const bb = (a, b) => tube(a, b, 0.032, 'satin', G.BULLBAR);
+  bb([2.86, 0.48, -0.9], [2.86, 0.48, 0.9]);
+  bb([2.88, 0.98, -0.42], [2.88, 0.98, 0.42]);
+  for (const s of [-1, 1]) { bb([2.86, 0.46, s * 0.42], [2.88, 1.0, s * 0.42]); bb([2.86, 0.48, s * 0.9], [2.74, 0.88, s * 0.94]); bb([2.86, 0.6, s * 0.42], [2.86, 0.6, s * 0.9]); bb([2.86, 0.55, s * 0.55], [2.68, 0.55, s * 0.55]); }
+  rect([2.87, 0.34, -0.88], [0, 0, 1], [0, 1, 0], 1.76, 0.14, [1, 0, 0], 'satin', G.BULLBAR);
+  // LED light bar on the roof's front edge
+  rect([0.4, 1.83, -0.62], [0, 0, 1], [0, 1, 0], 1.24, 0.09, [1, 0, 0], null, G.LIGHTBAR, (p) => (Math.abs(p[1] - 1.875) < 0.022 && Math.floor((p[2] + 1) / 0.035) % 2 === 0 ? 'led' : 'black'));
+  rect([0.32, 1.92, -0.62], [1, 0, 0], [0, 0, 1], 0.08, 1.24, [0, 1, 0], 'black', G.LIGHTBAR);
+  // roof racks
+  for (const x of [0.32, -0.05, -0.38]) tube([x, 1.9, -0.8], [x, 1.9, 0.8], 0.018, 'black', G.RACKS);
+  for (const s of [-1, 1]) { tube([-0.42, 1.92, s * 0.8], [0.4, 1.92, s * 0.8], 0.016, 'black', G.RACKS); for (const x of [0.32, -0.38]) tube([x, 1.8, s * 0.8], [x, 1.92, s * 0.8], 0.02, 'black', G.RACKS); }
+  // snorkel up the left A-pillar
+  tube([1.72, 0.98, -0.96], [1.2, 1.1, -0.97], 0.045, 'satin', G.SNORKEL);
+  tube([1.2, 1.1, -0.97], [0.98, 1.62, -0.9], 0.045, 'satin', G.SNORKEL);
+  tube([0.98, 1.62, -0.9], [0.9, 1.86, -0.88], 0.045, 'satin', G.SNORKEL);
+  tube([0.86, 1.88, -0.88], [1.05, 1.9, -0.88], 0.065, 'satin', G.SNORKEL);
+  // roller tub cover
+  rect([-2.6, 1.16, -0.84], [1, 0, 0], [0, 0, 1], 2.0, 1.68, [0, 1, 0], null, G.COVER, (p) => (Math.floor(p[0] / 0.05) % 2 ? 'black' : 'satin'));
+  cylZ(-0.56, 1.2, -0.84, 0.84, 0.07, 0, TAU, false, 'satin', G.COVER);
+  // tow bar
+  tube([-2.6, 0.42, 0], [-2.96, 0.42, 0], 0.035, 'satin', G.TOWBAR);
+  for (let i = 0; i < 160; i++) { const d = vnorm([rnd() - 0.5, rnd() - 0.5, rnd() - 0.5]); add(vadd([-2.99, 0.5, 0], vmul(d, 0.04)), d, 'chrome', G.TOWBAR); }
+
+  const n = out.length / 15;
+  const S = makeSplatSet(n, 'Demo ute');
+  for (let i = 0; i < n; i++) {
+    const o = i * 15;
+    setSplat(S, i, out[o], out[o + 1], out[o + 2], out[o + 3], out[o + 4], out[o + 5], out[o + 6], out[o + 7], out[o + 8], out[o + 9], out[o + 10], out[o + 11], out[o + 12], out[o + 13], out[o + 14]);
+  }
+  S.groups = true;
+  S.isDemo = true;
+  return S;
+}
+
+/* ---------------- configurator data (fictional vehicle and pricing) ---------------- */
+const CFG = {
+  model: 'Corella DC',
+  paints: [
+    { id: 'white', name: 'Glacier White', rgb: [0.86, 0.87, 0.86], price: 0 },
+    { id: 'graphite', name: 'Graphite', rgb: [0.27, 0.285, 0.3], price: 750 },
+    { id: 'red', name: 'Outback Red', rgb: [0.56, 0.11, 0.07], price: 750 },
+    { id: 'black', name: 'Eclipse Black', rgb: [0.05, 0.05, 0.055], price: 750 },
+    { id: 'blue', name: 'Saltwater Blue', rgb: [0.12, 0.28, 0.47], price: 750 },
+    { id: 'sand', name: 'Sandstorm', rgb: [0.66, 0.56, 0.39], price: 750 },
+  ],
+  grades: [
+    { id: 'trade', name: 'Trade', base: 49990, note: 'Black trim, vinyl floor, 8" screen', trim: [0.07, 0.07, 0.075], spec: 0.25 },
+    { id: 'touring', name: 'Touring', base: 58490, note: 'Satin trim, cloth seats, 12" screen', trim: [0.3, 0.31, 0.32], spec: 0.7 },
+    { id: 'summit', name: 'Summit', base: 66990, note: 'Chrome trim, leather, 360° camera', trim: [0.72, 0.74, 0.76], spec: 1.6 },
+  ],
+  wheels: [
+    { id: 'steel17', name: '17" steel', short: '17" steel', price: 0 },
+    { id: 'alloy18', name: '18" alloy', short: '18" alloy', price: 1200 },
+    { id: 'at18', name: '18" alloy, all-terrain tyres', short: '18" A/T', price: 1950 },
+  ],
+  extras: [
+    { id: 'bullbar', name: 'Bull bar', price: 3450, group: G.BULLBAR },
+    { id: 'lightbar', name: 'LED light bar', price: 1190, group: G.LIGHTBAR },
+    { id: 'racks', name: 'Roof racks', price: 890, group: G.RACKS },
+    { id: 'snorkel', name: 'Snorkel', price: 780, group: G.SNORKEL },
+    { id: 'cover', name: 'Roller tub cover', price: 2650, group: G.COVER },
+    { id: 'towbar', name: 'Tow bar', price: 1150, group: G.TOWBAR },
+  ],
+};
+const state = { paint: 'blue', grade: 'touring', wheels: 'alloy18', extras: new Set(['racks']), turntable: !matchMedia('(prefers-reduced-motion: reduce)').matches, life: true };
+const byId = (list, id) => list.find((x) => x.id === id);
+const money = (v) => '$' + Math.round(v).toLocaleString('en-AU');
+function price() {
+  let p = byId(CFG.grades, state.grade).base + byId(CFG.paints, state.paint).price + byId(CFG.wheels, state.wheels).price;
+  for (const e of CFG.extras) if (state.extras.has(e.id)) p += e.price;
+  return p;
+}
+function hiddenMask() {
+  let m = 0;
+  for (const e of CFG.extras) if (!state.extras.has(e.id)) m |= 1 << e.group;
+  if (state.wheels === 'steel17') m |= (1 << G.ALLOY) | (1 << G.AT);
+  else if (state.wheels === 'alloy18') m |= (1 << G.STEEL) | (1 << G.AT);
+  else m |= (1 << G.STEEL) | (1 << G.ROAD);
+  return m;
+}
+
+/* ---------------- model placement ---------------- */
+const model = { set: null, rot: M4.ident(), offset: [0, 0, 0], fit: 1, userScale: 1, len: 5.4, height: 1.9, crop: 0, floorCut: -1e9 };
+const stage = { pos: [0, 0, 0], yaw: 0, scale: 1 };
+function percentile(arr, p) { return arr[Math.min(arr.length - 1, Math.max(0, Math.floor(p * (arr.length - 1))))]; }
+function computeFit(autoFit) {
+  const S = model.set, R = M4.mul(model.rot, S.conv);
+  const step = Math.max(1, Math.floor(S.n / 80000));
+  const xs = [], ys = [], zs = [];
+  for (let i = 0; i < S.n; i += step) { const p = M4.apply(R, [S.pos[i * 3], S.pos[i * 3 + 1], S.pos[i * 3 + 2]]); xs.push(p[0]); ys.push(p[1]); zs.push(p[2]); }
+  const num = (a, b) => a - b;
+  xs.sort(num); ys.sort(num); zs.sort(num);
+  const lo = S.isDemo ? 0 : 0.03, hi = S.isDemo ? 1 : 0.97;
+  const x0 = percentile(xs, lo), x1 = percentile(xs, hi), z0 = percentile(zs, lo), z1 = percentile(zs, hi), y0 = percentile(ys, S.isDemo ? 0 : 0.01), y1 = percentile(ys, S.isDemo ? 1 : 0.99);
+  model.offset = [-(x0 + x1) / 2, -y0, -(z0 + z1) / 2];
+  const len = Math.max(x1 - x0, z1 - z0, 1e-3);
+  if (autoFit) model.fit = len < 0.3 || len > 60 ? 5.3 / len : 1;
+  model.rawLen = len; model.rawHeight = y1 - y0;
+  updateDims();
+}
+function updateDims() { const k = model.fit * model.userScale; model.len = model.rawLen * k; model.height = model.rawHeight * k; }
+function fitMatrix() {
+  const k = model.fit * model.userScale;
+  return M4.mul(M4.mul(M4.scale(k), M4.trans(model.offset[0], model.offset[1], model.offset[2])), M4.mul(model.rot, model.set.conv));
+}
+function stageMatrix() { return M4.mul(M4.mul(M4.trans(stage.pos[0], stage.pos[1], stage.pos[2]), M4.rotY(stage.yaw)), M4.scale(stage.scale)); }
+
+/* ---------------- drawing ---------------- */
+let discVAO = null, panelVAO = null, lineVAO = null, lineBuf = null;
+function drawDisc(proj, view, stageM, xrMode) {
+  gl.useProgram(R.disc.p);
+  gl.uniformMatrix4fv(R.disc.u.uProj, false, proj);
+  gl.uniformMatrix4fv(R.disc.u.uView, false, M4.mul(view, stageM));
+  gl.uniform1f(R.disc.u.uRadius, Math.max(1.0, model.len * 0.64));
+  gl.uniform3fv(R.disc.u.uColor, [0.86, 0.78, 0.6]);
+  gl.uniform1f(R.disc.u.uShadow, xrMode === 'additive' ? 0 : 0.5);
+  gl.uniform1f(R.disc.u.uRing, xrMode === 'additive' ? 0.6 : 1);
+  gl.bindVertexArray(discVAO);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+function drawSplats(proj, mv, vpW, vpH, fitM, maxPx) {
+  if (!GPU.drawN) return;
+  const u = R.splat.u;
+  gl.useProgram(R.splat.p);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, GPU.tex); gl.uniform1i(u.uTex, 0);
+  gl.uniformMatrix4fv(u.uProj, false, proj);
+  gl.uniformMatrix4fv(u.uView, false, mv);
+  gl.uniformMatrix4fv(u.uFit, false, fitM);
+  gl.uniform2f(u.uFocal, proj[0] * vpW / 2, proj[5] * vpH / 2);
+  gl.uniform2f(u.uViewport, vpW, vpH);
+  const paint = byId(CFG.paints, state.paint), grade = byId(CFG.grades, state.grade);
+  gl.uniform3fv(u.uPaint, paint.rgb);
+  gl.uniform3fv(u.uTrim, grade.trim);
+  gl.uniform1f(u.uTrimSpec, grade.spec);
+  gl.uniform1i(u.uHidden, model.set && model.set.groups ? hiddenMask() : 0);
+  gl.uniform1f(u.uCrop, model.crop);
+  gl.uniform1f(u.uFloorCut, model.floorCut);
+  gl.uniform1f(u.uMaxPx, maxPx);
+  gl.bindVertexArray(GPU.vao);
+  gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, GPU.drawN);
+}
+function drawWorld(proj, view, vpW, vpH, opts) {
+  const stageM = stageMatrix(), fitM = fitMatrix(), modelM = M4.mul(stageM, fitM);
+  gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  drawDisc(proj, view, stageM, opts.blend);
+  drawSplats(proj, M4.mul(view, modelM), vpW, vpH, fitM, opts.maxPx);
+  if (opts.xr) { drawPanel(proj, view); drawRays(proj, view); }
+  gl.bindVertexArray(null);
+}
+
+/* ---------------- desktop orbit camera ---------------- */
+const cam = { yaw: 0.95, pitch: 0.2, dist: 8.5, fov: 0.62, target: [0, 0.85, 0] };
+// the part of the screen not covered by the floating panels, in CSS pixels
+function freeArea() {
+  const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1;
+  let l = 0, r = W, t = 60, b = H - 40;
+  const L = document.getElementById('modelPanel'), Rt = document.getElementById('buildPanel');
+  const shown = (el) => el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
+  if (shown(L)) { const q = L.getBoundingClientRect(); if (q.height > H * 0.6) l = q.right + 8; else b = Math.min(b, q.top - 8); }
+  if (shown(Rt)) { const q = Rt.getBoundingClientRect(); if (q.height > H * 0.6) r = q.left - 8; else b = Math.min(b, q.top - 8); }
+  if (r - l < W * 0.3) { l = 0; r = W; }
+  if (b - t < H * 0.15) { t = 0; b = H; }
+  return { W, H, l, r, t, b };
+}
+function lensShift() {
+  const f = freeArea();
+  return [((f.l + f.r) / 2 - f.W / 2) / (f.W / 2), -((f.t + f.b) / 2 - f.H / 2) / (f.H / 2)];
+}
+function resetView() {
+  cam.yaw = 0.95; cam.pitch = 0.2;
+  cam.target = [0, model.height * 0.42, 0];
+  const f = freeArea(), aspect = f.W / f.H, tf = Math.tan(cam.fov / 2);
+  const halfW = (f.r - f.l) / f.W, halfH = (f.b - f.t) / f.H;
+  const dw = (model.len * 0.56) / (tf * aspect * halfW);
+  const dh = (model.height * 0.62 + model.len * 0.1) / (tf * halfH);
+  cam.dist = clamp(Math.max(dw, dh, model.len * 0.8 + 1), 1, 200);
+}
+function camEye() { return vadd(cam.target, [Math.cos(cam.pitch) * Math.sin(cam.yaw) * cam.dist, Math.sin(cam.pitch) * cam.dist, Math.cos(cam.pitch) * Math.cos(cam.yaw) * cam.dist]); }
+let lastT = 0, rafId = 0, fpsAcc = 0, fpsN = 0, fps = 0;
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+}
+function frame(t) {
+  rafId = 0;
+  if (xr) return;
+  rafId = requestAnimationFrame(frame);
+  const dt = lastT ? clamp((t - lastT) / 1000, 0, 0.1) : 0.016;
+  lastT = t;
+  fpsAcc += dt; fpsN++; if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; updateStats(); }
+  if (state.turntable) stage.yaw += dt * 0.16;
+  resize();
+  if (!model.set) return;
+  const w = canvas.width, h = canvas.height;
+  const proj = M4.persp(cam.fov, w / h, 0.05, 800);
+  const shift = lensShift();
+  proj[8] = -shift[0]; proj[9] = -shift[1];
+  const view = M4.lookAt(camEye(), cam.target, [0, 1, 0]);
+  requestSort(M4.mul(view, M4.mul(stageMatrix(), fitMatrix())));
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, w, h);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  drawWorld(proj, view, w, h, { maxPx: 1024, blend: 'opaque' });
+}
+function startLoop() { if (!rafId && !xr) { lastT = 0; rafId = requestAnimationFrame(frame); } }
+
+// orbit / zoom / pan with mouse, touch or pen
+const pointers = new Map();
+let pinch0 = null;
+canvas.addEventListener('pointerdown', (e) => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey }); try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } canvas.classList.add('dragging'); pinch0 = null; });
+canvas.addEventListener('pointermove', (e) => {
+  const p = pointers.get(e.pointerId);
+  if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 1) {
+    if (p.btn === 2 || p.shift) pan(dx, dy);
+    else { cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.005, -0.15, 1.35); }
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinch0) cam.dist = clamp(cam.dist * (pinch0 / d), 0.5, 80);
+    pinch0 = d;
+  }
+});
+function pan(dx, dy) {
+  const k = cam.dist * 0.0012;
+  const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+  cam.target = vadd(cam.target, vadd(vmul(right, -dx * k), [0, dy * k, 0]));
+}
+for (const ev of ['pointerup', 'pointercancel']) canvas.addEventListener(ev, (e) => { pointers.delete(e.pointerId); pinch0 = null; if (!pointers.size) canvas.classList.remove('dragging'); });
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); cam.dist = clamp(cam.dist * Math.exp(e.deltaY * 0.0012), 0.5, 80); }, { passive: false });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+/* ---------------- WebXR ---------------- */
+let xr = null, xrMode = null;
+const head = { pos: [0, 1.6, 0], quat: [0, 0, 0, 1] };
+const panel = { c: [0, 1.4, -1], r: [0.23, 0, 0], u: [0, 0.29, 0], hw: 0.23, hh: 0.29, n: [0, 0, 1], tex: null, cv: null, ctx: null, W: 1024, H: 1290, buttons: [], hover: null, dirty: true, offFor: 0, yaw: 0 };
+const grabs = new Map();
+let rays = [];
+function headYaw() { const f = quatRotate(head.quat, [0, 0, -1]); return Math.atan2(-f[0], -f[2]); }
+function placeAll() {
+  const yaw = headYaw();
+  const f = [-Math.sin(yaw), 0, -Math.cos(yaw)], right = [Math.cos(yaw), 0, -Math.sin(yaw)];
+  const dF = vnorm(vadd(vmul(f, -0.55), vmul(right, 0.85)));
+  stage.yaw = Math.atan2(-dF[2], dF[0]);
+  if (state.life) {
+    stage.scale = 1;
+    const d = model.len * 0.5 + 2.6;
+    stage.pos = [head.pos[0] + f[0] * d, xr.floorY, head.pos[2] + f[2] * d];
+  } else {
+    stage.scale = 0.7 / Math.max(0.3, model.len);
+    stage.pos = [head.pos[0] + f[0] * 0.75, head.pos[1] - 0.48, head.pos[2] + f[2] * 0.75];
+  }
+  placePanel(yaw);
+}
+function placePanel(yaw) {
+  const f = [-Math.sin(yaw), 0, -Math.cos(yaw)], right = [Math.cos(yaw), 0, -Math.sin(yaw)];
+  const c = vadd(vadd(head.pos, vmul(f, 0.85)), vadd(vmul(right, -0.5), [0, -0.12, 0]));
+  setPanelPose(c);
+  panel.yaw = yaw;
+}
+function setPanelPose(c) {
+  const toHead = vnorm([head.pos[0] - c[0], 0, head.pos[2] - c[2]]);
+  const r = vcross([0, 1, 0], toHead);
+  panel.c = c; panel.n = toHead; panel.r = vmul(r, panel.hw); panel.u = [0, panel.hh, 0];
+}
+function panelHit(o, d) {
+  const n = panel.n, den = vdot(d, n);
+  if (Math.abs(den) < 1e-5) return null;
+  const t = vdot(vsub(panel.c, o), n) / den;
+  if (t < 0.05 || t > 6) return null;
+  const p = vadd(o, vmul(d, t)), rel = vsub(p, panel.c);
+  const u = vdot(rel, vnorm(panel.r)) / panel.hw, v = vdot(rel, [0, 1, 0]) / panel.hh;
+  if (Math.abs(u) > 1 || Math.abs(v) > 1) return null;
+  return { p, t, x: (u * 0.5 + 0.5) * panel.W, y: (0.5 - v * 0.5) * panel.H };
+}
+function buttonAt(x, y) { return panel.buttons.find((b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) || null; }
+function rayOf(frame, src) {
+  const pose = frame.getPose(src.targetRaySpace, xr.ref);
+  if (!pose) return null;
+  const p = pose.transform.position, q = pose.transform.orientation;
+  return { o: [p.x, p.y, p.z], d: quatRotate([q.x, q.y, q.z, q.w], [0, 0, -1]) };
+}
+function gripOf(frame, src) {
+  const pose = (src.gripSpace && frame.getPose(src.gripSpace, xr.ref)) || frame.getPose(src.targetRaySpace, xr.ref);
+  if (!pose) return null;
+  const p = pose.transform.position;
+  return [p.x, p.y, p.z];
+}
+function onSelectStart(e) {
+  if (!xr) return;
+  const ray = rayOf(e.frame, e.inputSource);
+  if (!ray) return;
+  const hit = panelHit(ray.o, ray.d);
+  if (hit) { const b = buttonAt(hit.x, hit.y); if (b) { b.act(); Sound.click(); } return; }
+  const g = gripOf(e.frame, e.inputSource);
+  if (g) grabs.set(e.inputSource, { last: g, cur: g });
+}
+function onSelectEnd(e) { grabs.delete(e.inputSource); }
+function updateGrabs(frame) {
+  for (const [src, g] of grabs) { const p = gripOf(frame, src); if (p) g.cur = p; }
+  const list = [...grabs.values()];
+  if (list.length === 1) {
+    const g = list[0];
+    const d = vsub(g.cur, g.last);
+    stage.pos = vadd(stage.pos, state.life ? [d[0], 0, d[2]] : d);
+  } else if (list.length >= 2) {
+    const a = list[0], b = list[1];
+    const midL = vmul(vadd(a.last, b.last), 0.5), midC = vmul(vadd(a.cur, b.cur), 0.5);
+    const dL = Math.hypot(a.last[0] - b.last[0], a.last[2] - b.last[2]) || 1e-3, dC = Math.hypot(a.cur[0] - b.cur[0], a.cur[2] - b.cur[2]) || 1e-3;
+    const angL = Math.atan2(b.last[2] - a.last[2], b.last[0] - a.last[0]), angC = Math.atan2(b.cur[2] - a.cur[2], b.cur[0] - a.cur[0]);
+    let dAng = angC - angL; if (dAng > Math.PI) dAng -= TAU; if (dAng < -Math.PI) dAng += TAU;
+    const k = clamp(dC / dL, 0.8, 1.25);
+    const newScale = clamp(stage.scale * k, 0.02, 4), kk = newScale / stage.scale;
+    stage.scale = newScale;
+    const th = -dAng, c = Math.cos(th), s = Math.sin(th);
+    const rel = vsub(stage.pos, midL);
+    const moved = [(c * rel[0] + s * rel[2]) * kk, rel[1] * kk, (-s * rel[0] + c * rel[2]) * kk];
+    stage.yaw += th;
+    stage.pos = vadd(midC, moved);
+    if (state.life) stage.pos[1] = xr.floorY;
+  }
+  for (const g of list) g.last = g.cur;
+}
+
+async function startXR() {
+  if (!xrMode || xr || !model.set) return;
+  Sound.init();
+  ui.btnXR.disabled = true;
+  let session;
+  try { session = await navigator.xr.requestSession(xrMode, { optionalFeatures: ['local-floor', 'hand-tracking'] }); }
+  catch (e) { ui.btnXR.disabled = false; setXRStatus(`<strong>The glasses view didn’t start.</strong> ${esc(e && e.message ? e.message : String(e))}`); return; }
+  try {
+    if (gl.makeXRCompatible) { try { await gl.makeXRCompatible(); } catch (err) { /* context already xrCompatible */ } }
+    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl, { antialias: false, alpha: true }), depthNear: 0.05, depthFar: 500 });
+    let ref, floor = true;
+    try { ref = await session.requestReferenceSpace('local-floor'); } catch (err) { ref = await session.requestReferenceSpace('local'); floor = false; }
+    xr = { session, ref, floor, floorY: 0, placed: false, last: 0, blend: session.environmentBlendMode || (xrMode === 'immersive-ar' ? 'alpha-blend' : 'opaque') };
+  } catch (e) {
+    ui.btnXR.disabled = false;
+    setXRStatus(`<strong>The glasses view didn’t start.</strong> ${esc(e && e.message ? e.message : String(e))}`);
+    try { await session.end(); } catch (err) { /* ended */ }
+    return;
+  }
+  if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+  document.body.classList.add('in-xr');
+  grabs.clear();
+  session.addEventListener('selectstart', onSelectStart);
+  session.addEventListener('selectend', onSelectEnd);
+  session.addEventListener('end', onXREnd);
+  panel.dirty = true;
+  session.requestAnimationFrame(xrFrame);
+}
+function onXREnd() {
+  xr = null;
+  ui.btnXR.disabled = false;
+  document.body.classList.remove('in-xr');
+  stage.pos = [0, 0, 0]; stage.yaw = 0; stage.scale = 1;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  startLoop();
+}
+function xrFrame(t, frame) {
+  if (!xr) return;
+  const s = frame.session;
+  s.requestAnimationFrame(xrFrame);
+  const dt = xr.last ? clamp((t - xr.last) / 1000, 0, 0.1) : 0.016;
+  xr.last = t;
+  const pose = frame.getViewerPose(xr.ref);
+  if (!pose) return;
+  const hp = pose.transform.position, hq = pose.transform.orientation;
+  head.pos = [hp.x, hp.y, hp.z]; head.quat = [hq.x, hq.y, hq.z, hq.w];
+  if (!xr.placed) { xr.floorY = xr.floor ? 0 : head.pos[1] - 1.55; placeAll(); xr.placed = true; }
+  if (state.turntable && !grabs.size) stage.yaw += dt * 0.16;
+  // inputs: rays, hover, grabs
+  rays = [];
+  panel.hover = null;
+  for (const src of s.inputSources) {
+    const ray = rayOf(frame, src);
+    if (!ray) continue;
+    const hit = panelHit(ray.o, ray.d);
+    if (hit) { const b = buttonAt(hit.x, hit.y); if (b) panel.hover = b.id; }
+    rays.push({ o: ray.o, e: hit ? hit.p : vadd(ray.o, vmul(ray.d, 2.5)), on: !!hit, grab: grabs.has(src) });
+  }
+  updateGrabs(frame);
+  // keep the panel near where you're looking
+  const off = Math.abs(((headYaw() - panel.yaw + Math.PI * 3) % TAU) - Math.PI);
+  panel.offFor = off > 1.1 ? panel.offFor + dt : 0;
+  if (panel.offFor > 1.5) placePanel(headYaw());
+  const hoverKey = panel.hover || '';
+  if (hoverKey !== panel.lastHover) { panel.lastHover = hoverKey; panel.dirty = true; }
+  if (panel.dirty) paintPanel();
+  // sort for the head, draw both eyes
+  const modelM = M4.mul(stageMatrix(), fitMatrix());
+  requestSort(M4.mul(pose.transform.inverse.matrix, modelM));
+  const layer = s.renderState.baseLayer;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+  if (xr.blend === 'opaque') gl.clearColor(0.06, 0.065, 0.07, 1); else gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  for (const view of pose.views) {
+    const vp = layer.getViewport(view);
+    gl.viewport(vp.x, vp.y, vp.width, vp.height);
+    drawWorld(view.projectionMatrix, view.transform.inverse.matrix, vp.width, vp.height, { maxPx: 512, xr: true, blend: xr.blend });
+  }
+}
+function drawPanel(proj, view) {
+  if (!panel.tex) return;
+  gl.useProgram(R.panel.p);
+  gl.uniformMatrix4fv(R.panel.u.uProj, false, proj);
+  gl.uniformMatrix4fv(R.panel.u.uView, false, view);
+  gl.uniform3fv(R.panel.u.uC, panel.c); gl.uniform3fv(R.panel.u.uR, panel.r); gl.uniform3fv(R.panel.u.uU, panel.u);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, panel.tex); gl.uniform1i(R.panel.u.uTex, 0);
+  gl.uniform1f(R.panel.u.uOpacity, 1);
+  gl.bindVertexArray(panelVAO);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+function drawRays(proj, view) {
+  if (!rays.length) return;
+  gl.useProgram(R.line.p);
+  gl.uniformMatrix4fv(R.line.u.uProj, false, proj);
+  gl.uniformMatrix4fv(R.line.u.uView, false, view);
+  gl.bindVertexArray(lineVAO);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf);
+  for (const r of rays) {
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...r.o, ...r.e]), gl.DYNAMIC_DRAW);
+    gl.uniform4fv(R.line.u.uColor, r.on ? [0.86, 0.75, 0.5, 0.9] : r.grab ? [0.6, 0.85, 1.0, 0.9] : [0.5, 0.5, 0.5, 0.35]);
+    gl.drawArrays(gl.LINES, 0, 2);
+  }
+}
+
+/* ---------------- in-glasses panel (canvas texture) ---------------- */
+const PF = { display: '"Archivo", "Arial", sans-serif', mono: '"IBM Plex Mono", ui-monospace, monospace' };
+function paintPanel() {
+  panel.dirty = false;
+  if (!panel.cv) { panel.cv = document.createElement('canvas'); panel.cv.width = panel.W; panel.cv.height = panel.H; panel.ctx = panel.cv.getContext('2d'); panel.tex = gl.createTexture(); }
+  const x = panel.ctx, W = panel.W, H = panel.H;
+  const btns = [];
+  x.clearRect(0, 0, W, H);
+  rr(x, 4, 4, W - 8, H - 8, 36); x.fillStyle = 'rgba(17,18,20,0.9)'; x.fill(); x.lineWidth = 3; x.strokeStyle = 'rgba(201,180,138,0.55)'; x.stroke();
+  const grade = byId(CFG.grades, state.grade);
+  x.textBaseline = 'alphabetic'; x.textAlign = 'left';
+  x.fillStyle = '#c9b48a'; x.font = `600 26px ${PF.mono}`; x.fillText('CONFIGURATOR · CONCEPT', 56, 76);
+  x.fillStyle = '#f0ebe1'; x.font = `800 64px ${PF.display}`; x.fillText(CFG.model.toUpperCase(), 56, 146);
+  x.fillStyle = '#a7a39a'; x.font = `500 30px ${PF.display}`; x.fillText(`${grade.name} · ${byId(CFG.wheels, state.wheels).short}`, 56, 190);
+  x.textAlign = 'right'; x.fillStyle = '#f0ebe1'; x.font = `600 48px ${PF.mono}`; x.fillText(money(price()), W - 56, 146);
+  x.fillStyle = '#a7a39a'; x.font = `500 22px ${PF.mono}`; x.fillText('EST. DRIVE-AWAY', W - 56, 186);
+  let y = 250;
+  const label = (t) => { x.textAlign = 'left'; x.fillStyle = '#c9b48a'; x.font = `600 24px ${PF.mono}`; x.fillText(t, 56, y); y += 22; };
+  const hov = (id) => panel.hover === id;
+  // paint swatches
+  label('PAINT · ' + byId(CFG.paints, state.paint).name.toUpperCase());
+  CFG.paints.forEach((p, i) => {
+    const cx = 110 + i * 150, cy = y + 64, r = 50;
+    x.beginPath(); x.arc(cx, cy, r, 0, TAU);
+    x.fillStyle = `rgb(${p.rgb.map((c) => Math.round(clamp(c * 1.25, 0, 1) * 255)).join(',')})`; x.fill();
+    if (state.paint === p.id || hov('paint:' + p.id)) { x.beginPath(); x.arc(cx, cy, r + 12, 0, TAU); x.lineWidth = state.paint === p.id ? 6 : 3; x.strokeStyle = '#c9b48a'; x.stroke(); }
+    btns.push({ id: 'paint:' + p.id, x: cx - r - 14, y: cy - r - 14, w: 2 * r + 28, h: 2 * r + 28, act: () => setState({ paint: p.id }) });
+  });
+  y += 160;
+  const seg = (title, items, cur, key) => {
+    label(title);
+    const w = (W - 112 - 16 * (items.length - 1)) / items.length;
+    items.forEach((it, i) => {
+      const bx = 56 + i * (w + 16), by = y + 8, bh = 92, id = key + ':' + it.id, on = cur === it.id;
+      rr(x, bx, by, w, bh, 16);
+      x.fillStyle = on ? '#c9b48a' : hov(id) ? 'rgba(240,235,225,0.16)' : 'rgba(240,235,225,0.07)'; x.fill();
+      x.fillStyle = on ? '#16130d' : '#f0ebe1'; x.textAlign = 'center'; x.font = `700 32px ${PF.display}`;
+      x.fillText(it.short || it.name, bx + w / 2, by + 58);
+      btns.push({ id, x: bx, y: by, w, h: bh, act: () => setState({ [key]: it.id }) });
+    });
+    y += 132;
+  };
+  seg('GRADE', CFG.grades, state.grade, 'grade');
+  seg('WHEELS', CFG.wheels, state.wheels, 'wheels');
+  label('ACCESSORIES');
+  const cw = (W - 112 - 16) / 2;
+  CFG.extras.forEach((e, i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const bx = 56 + col * (cw + 16), by = y + 8 + row * 96, bh = 80, id = 'extra:' + e.id, on = state.extras.has(e.id);
+    rr(x, bx, by, cw, bh, 16);
+    x.fillStyle = hov(id) ? 'rgba(240,235,225,0.16)' : 'rgba(240,235,225,0.07)'; x.fill();
+    if (on) { x.lineWidth = 4; x.strokeStyle = '#c9b48a'; x.stroke(); }
+    rr(x, bx + 22, by + 22, 36, 36, 8); x.fillStyle = on ? '#c9b48a' : 'rgba(240,235,225,0.15)'; x.fill();
+    if (on) { x.strokeStyle = '#16130d'; x.lineWidth = 5; x.beginPath(); x.moveTo(bx + 30, by + 41); x.lineTo(bx + 38, by + 50); x.lineTo(bx + 52, by + 30); x.stroke(); }
+    x.textAlign = 'left'; x.fillStyle = '#f0ebe1'; x.font = `600 30px ${PF.display}`; x.fillText(e.name, bx + 76, by + 52);
+    x.textAlign = 'right'; x.fillStyle = '#a7a39a'; x.font = `500 22px ${PF.mono}`; x.fillText('+' + money(e.price), bx + cw - 20, by + 52);
+    btns.push({ id, x: bx, y: by, w: cw, h: bh, act: () => toggleExtra(e.id) });
+  });
+  y += 8 + 3 * 96 + 26;
+  // view controls
+  const vw = (W - 112 - 32) / 3;
+  [['turntable', state.turntable ? 'Turntable on' : 'Turntable off', () => setState({ turntable: !state.turntable })],
+    ['life', state.life ? 'Life size' : 'Table-top', () => { state.life = !state.life; placeAll(); panel.dirty = true; syncDom(); }],
+    ['recentre', 'Re-centre', () => placeAll()]].forEach(([id, txt, act], i) => {
+    const bx = 56 + i * (vw + 16), by = y, bh = 84;
+    rr(x, bx, by, vw, bh, 42);
+    x.fillStyle = hov('view:' + id) ? 'rgba(201,180,138,0.35)' : 'rgba(201,180,138,0.16)'; x.fill();
+    x.fillStyle = '#f0ebe1'; x.textAlign = 'center'; x.font = `700 30px ${PF.display}`; x.fillText(txt, bx + vw / 2, by + 53);
+    btns.push({ id: 'view:' + id, x: bx, y: by, w: vw, h: bh, act });
+  });
+  y += 128;
+  x.textAlign = 'center'; x.fillStyle = '#a7a39a'; x.font = `500 25px ${PF.display}`;
+  x.fillText('Pinch the ute to move it. Pinch with both hands to resize or turn it.', W / 2, y);
+  x.fillText('Concept pricing for illustration only.', W / 2, y + 38);
+  panel.buttons = btns;
+  gl.bindTexture(gl.TEXTURE_2D, panel.tex);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, panel.cv);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+}
+function rr(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+
+/* ---------------- tiny UI sounds ---------------- */
+const Sound = (() => {
+  let ctx = null;
+  return {
+    init() { if (ctx) return; const AC = window.AudioContext || window.webkitAudioContext; if (AC) try { ctx = new AC(); } catch (e) { ctx = null; } },
+    click() {
+      if (!ctx) return;
+      const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(1400, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.05);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.08);
+    },
+  };
+})();
+
+/* ---------------- state changes ---------------- */
+function setState(p) { Object.assign(state, p); panel.dirty = true; syncDom(); }
+function toggleExtra(id) { if (state.extras.has(id)) state.extras.delete(id); else state.extras.add(id); panel.dirty = true; syncDom(); }
+
+/* ---------------- page UI ---------------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ui = {
+  btnXR: $('btnXR'), xrStatus: $('xrStatus'), modelName: $('modelName'), modelStatus: $('modelStatus'), stats: $('stats'),
+  file: $('fileInput'), urlForm: $('urlForm'), url: $('urlInput'), btnDemo: $('btnDemo'),
+  scale: $('scaleRange'), scaleOut: $('scaleOut'), crop: $('cropRange'), cropOut: $('cropOut'), floor: $('floorRange'), floorOut: $('floorOut'),
+  turntable: $('turntable'), price: $('price'), priceNote: $('priceNote'), scanNote: $('scanNote'), drop: $('drop'), toast: $('toast'),
+  gradeList: $('gradeList'), paintList: $('paintList'), paintName: $('paintName'), wheelList: $('wheelList'), extraList: $('extraList'),
+};
+function setModelStatus(html) { ui.modelStatus.innerHTML = html; }
+function setXRStatus(html) { ui.xrStatus.innerHTML = html; }
+let toastT = 0;
+function toast(msg) { ui.toast.textContent = msg; ui.toast.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { ui.toast.hidden = true; }, 2600); }
+function updateStats() {
+  if (!model.set) return;
+  ui.stats.textContent = `${model.set.n.toLocaleString('en-AU')} splats · ${model.len.toFixed(2)} m long · ${Math.round(fps)} fps`;
+}
+
+/* build panel */
+function buildDom() {
+  ui.gradeList.innerHTML = CFG.grades.map((g) => `<button type="button" class="grade" data-grade="${g.id}" aria-pressed="false"><span class="grade-name">${g.name}</span><span class="grade-note">${g.note}</span><span class="grade-price">from ${money(g.base)}</span></button>`).join('');
+  ui.paintList.innerHTML = CFG.paints.map((p) => `<button type="button" class="swatch" data-paint="${p.id}" aria-pressed="false" aria-label="${p.name}${p.price ? ', plus ' + money(p.price) : ', no cost'}" style="--sw: rgb(${p.rgb.map((c) => Math.round(clamp(c * 1.25, 0, 1) * 255)).join(',')})"></button>`).join('');
+  ui.wheelList.innerHTML = CFG.wheels.map((w) => `<button type="button" class="opt" data-wheels="${w.id}" aria-pressed="false"><span>${w.name}</span><span class="opt-price">${w.price ? '+' + money(w.price) : 'Included'}</span></button>`).join('');
+  ui.extraList.innerHTML = CFG.extras.map((e) => `<label class="extra"><input type="checkbox" data-extra="${e.id}"><span class="extra-name">${e.name}</span><span class="opt-price">+${money(e.price)}</span></label>`).join('');
+  ui.gradeList.addEventListener('click', (e) => { const b = e.target.closest('[data-grade]'); if (b) setState({ grade: b.dataset.grade }); });
+  ui.paintList.addEventListener('click', (e) => { const b = e.target.closest('[data-paint]'); if (b) setState({ paint: b.dataset.paint }); });
+  ui.wheelList.addEventListener('click', (e) => { const b = e.target.closest('[data-wheels]'); if (b) setState({ wheels: b.dataset.wheels }); });
+  ui.extraList.addEventListener('change', (e) => { const c = e.target.closest('[data-extra]'); if (c) toggleExtra(c.dataset.extra); });
+  $('btnSave').addEventListener('click', () => toast('Saving builds is part of the concept. It isn’t wired up yet.'));
+  $('btnShare').addEventListener('click', () => toast('Sharing a build is part of the concept. It isn’t wired up yet.'));
+}
+function syncDom() {
+  for (const b of ui.gradeList.querySelectorAll('[data-grade]')) b.setAttribute('aria-pressed', String(b.dataset.grade === state.grade));
+  for (const b of ui.paintList.querySelectorAll('[data-paint]')) b.setAttribute('aria-pressed', String(b.dataset.paint === state.paint));
+  for (const b of ui.wheelList.querySelectorAll('[data-wheels]')) b.setAttribute('aria-pressed', String(b.dataset.wheels === state.wheels));
+  for (const c of ui.extraList.querySelectorAll('[data-extra]')) c.checked = state.extras.has(c.dataset.extra);
+  const p = byId(CFG.paints, state.paint);
+  ui.paintName.textContent = `${p.name} · ${p.price ? '+' + money(p.price) : 'no cost'}`;
+  ui.price.textContent = money(price());
+  ui.turntable.checked = state.turntable;
+  ui.scanNote.hidden = !model.set || !!model.set.isDemo;
+}
+
+/* model panel */
+async function loadBuffer(buf, name) {
+  setModelStatus(`Reading <strong>${esc(name)}</strong>…`);
+  await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  try {
+    const t0 = performance.now();
+    const S = await parseSplatFile(buf, name);
+    useSet(S, true);
+    setModelStatus(`Loaded <strong>${esc(name)}</strong> in ${((performance.now() - t0) / 1000).toFixed(1)} s. If it’s sideways or upside down, use the orientation buttons.`);
+  } catch (e) {
+    setModelStatus(`<strong>Couldn’t open ${esc(name)}.</strong> ${esc(e && e.message ? e.message : String(e))}`);
+  }
+}
+function useSet(S, autoFit) {
+  model.set = S; model.rot = M4.ident(); model.userScale = 1; model.crop = 0; model.floorCut = -1e9;
+  ui.scale.value = '0'; ui.crop.value = '0'; ui.floor.value = '0';
+  computeFit(autoFit);
+  uploadSplats(S);
+  resetView();
+  ui.modelName.textContent = S.isDemo ? 'Demo ute (built from splats)' : S.name;
+  ui.btnDemo.hidden = !!S.isDemo;
+  updateSliders(); syncDom(); updateStats();
+  if (xr) placeAll();
+}
+ui.file.addEventListener('change', async () => { const f = ui.file.files[0]; if (f) await loadBuffer(await f.arrayBuffer(), f.name); ui.file.value = ''; });
+ui.urlForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const url = ui.url.value.trim();
+  if (!url) return;
+  const name = decodeURIComponent(url.split('?')[0].split('/').pop() || 'scan');
+  setModelStatus(`Downloading <strong>${esc(name)}</strong>…`);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('The server answered ' + res.status + '.');
+    await loadBuffer(await res.arrayBuffer(), name);
+  } catch (err) {
+    setModelStatus(`<strong>Couldn’t download that link.</strong> The site may not allow it, and the preview window can’t fetch other sites. Download the file and use Open splat file instead.`);
+  }
+});
+ui.btnDemo.addEventListener('click', () => { useSet(buildDemoUte(), false); setModelStatus('Showing the demo ute.'); });
+const rotate = (m) => { model.rot = M4.mul(m, model.rot); computeFit(false); resetView(); if (xr) placeAll(); updateStats(); };
+$('rotX').addEventListener('click', () => rotate(M4.rotX(Math.PI / 2)));
+$('rotY').addEventListener('click', () => rotate(M4.rotY(Math.PI / 2)));
+$('rotZ').addEventListener('click', () => rotate(M4.rotZ(Math.PI / 2)));
+$('flip').addEventListener('click', () => rotate(M4.rotX(Math.PI)));
+$('btnFit').addEventListener('click', () => { model.fit = 5.3 / model.rawLen; model.userScale = 1; ui.scale.value = '0'; updateDims(); updateSliders(); resetView(); updateStats(); });
+$('btnReset').addEventListener('click', () => resetView());
+ui.turntable.addEventListener('change', () => setState({ turntable: ui.turntable.checked }));
+ui.scale.addEventListener('input', () => { model.userScale = Math.pow(2, parseFloat(ui.scale.value)); updateDims(); updateSliders(); updateStats(); });
+ui.scale.addEventListener('change', () => resetView());
+ui.crop.addEventListener('input', () => { const v = parseFloat(ui.crop.value); model.crop = v <= 0 ? 0 : v; updateSliders(); });
+ui.floor.addEventListener('input', () => { const v = parseFloat(ui.floor.value); model.floorCut = v <= 0 ? -1e9 : v; updateSliders(); });
+function updateSliders() {
+  ui.scaleOut.textContent = '×' + (model.fit * model.userScale).toFixed(2);
+  ui.cropOut.textContent = model.crop > 0 ? model.crop.toFixed(1) + ' m' : 'Off';
+  ui.floorOut.textContent = model.floorCut > -1e8 ? Math.round(model.floorCut * 100) + ' cm' : 'Off';
+}
+// drag and drop anywhere
+let dragDepth = 0;
+window.addEventListener('dragenter', (e) => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { dragDepth++; ui.drop.hidden = false; } });
+window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) ui.drop.hidden = true; });
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', async (e) => { e.preventDefault(); dragDepth = 0; ui.drop.hidden = true; const f = e.dataTransfer?.files?.[0]; if (f) await loadBuffer(await f.arrayBuffer(), f.name); });
+
+// narrow screens: panels become tabs
+for (const b of document.querySelectorAll('[data-sheet]')) b.addEventListener('click', () => {
+  const which = b.dataset.sheet;
+  document.body.dataset.sheet = document.body.dataset.sheet === which ? '' : which;
+  for (const x of document.querySelectorAll('[data-sheet]')) x.setAttribute('aria-pressed', String(document.body.dataset.sheet === x.dataset.sheet));
+  requestAnimationFrame(() => resetView());
+});
+let resizeT = 0;
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!xr) resetView(); }, 150); });
+
+/* glasses */
+ui.btnXR.addEventListener('click', startXR);
+const MSG_FRAMED = '<strong>The glasses view can’t start inside this preview.</strong> Open the standalone file in Chrome on the XREAL Aura.';
+async function detectXR() {
+  let framed = false;
+  try { framed = window.self !== window.top; } catch (e) { framed = true; }
+  if (!navigator.xr) { setXRStatus(framed ? MSG_FRAMED : 'Open this page in Chrome on the XREAL Aura to see it in your room.'); return; }
+  try { const fp = document.permissionsPolicy || document.featurePolicy; if (fp && fp.allowsFeature && !fp.allowsFeature('xr-spatial-tracking')) { setXRStatus(MSG_FRAMED); return; } } catch (e) { /* ignore */ }
+  let ar = false, vr = false;
+  try { ar = await navigator.xr.isSessionSupported('immersive-ar'); } catch (e) { if (e && e.name === 'SecurityError') { setXRStatus(MSG_FRAMED); return; } }
+  if (!ar) { try { vr = await navigator.xr.isSessionSupported('immersive-vr'); } catch (e) { /* ignore */ } }
+  if (ar || vr) {
+    xrMode = ar ? 'immersive-ar' : 'immersive-vr';
+    ui.btnXR.hidden = false;
+    setXRStatus(`<strong>Glasses ready.</strong> The ute appears life-size a couple of metres in front of you, with the build panel on your left.`);
+  } else setXRStatus(framed ? MSG_FRAMED : 'No glasses found here. Open this page in Chrome on the XREAL Aura to see it in your room.');
+}
+
+/* boot */
+function boot() {
+  if (!gl) { setModelStatus('<strong>This browser can’t draw 3D graphics (WebGL2 is off).</strong> Try an up-to-date Chrome.'); return; }
+  try {
+    GPU.maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    buildPrograms();
+    discVAO = quadVAO(); panelVAO = quadVAO();
+    lineVAO = gl.createVertexArray(); gl.bindVertexArray(lineVAO);
+    lineBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindVertexArray(null);
+    initSorter();
+    buildDom();
+    const t0 = performance.now();
+    useSet(buildDemoUte(), false);
+    window.__demoMs = performance.now() - t0;
+    setModelStatus('Showing the demo ute.');
+  } catch (e) {
+    setModelStatus('<strong>The viewer couldn’t start.</strong> ' + esc(e && e.message ? e.message : String(e)));
+    throw e;
+  }
+  startLoop();
+  detectXR();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { panel.dirty = true; });
+}
+window.__viewer = { model, stage, state, cam, GPU, sorter, panel, head, loadBuffer, get xr() { return xr; }, paintPanel, buttonAt, CFG };
+boot();
+
+})();
+</script>
+</body>
+</html>
