@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Corella Splat Configurator</title>
+<title>Splat Configurator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -67,7 +67,7 @@
     border: 1px solid var(--line);
     border-radius: 14px;
   }
-  .panel-left { left: max(16px, env(safe-area-inset-left, 0px)); width: 18.5rem; }
+  .panel-left { left: max(16px, env(safe-area-inset-left, 0px)); width: 19.5rem; }
   .panel-right { right: max(16px, env(safe-area-inset-right, 0px)); width: 22rem; }
   .panel > section { display: flex; flex-direction: column; gap: 0.55rem; }
   .panel h2 { margin: 0; font: 800 1.05rem/1.1 var(--font-display); font-stretch: 112%; letter-spacing: 0.04em; text-transform: uppercase; }
@@ -165,7 +165,7 @@
 
   @media (max-width: 900px) {
     .panel { display: none; top: auto; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); left: 12px !important; right: 12px !important; width: auto; max-height: 58vh; }
-    body[data-sheet="model"] .panel-left, body[data-sheet="build"] .panel-right { display: flex; }
+    body[data-sheet="scene"] .panel-left, body[data-sheet="build"] .panel-right { display: flex; }
     .tabs {
       position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
       display: flex; gap: 0.5rem;
@@ -173,104 +173,186 @@
     .tabs .btn { flex: 1; background: var(--card-solid); }
     .tabs .btn[aria-pressed="true"] { border-color: var(--sand); color: var(--sand); }
     .stats { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
-    body[data-sheet="model"] .stats, body[data-sheet="build"] .stats { display: none; }
+    body[data-sheet="scene"] .stats, body[data-sheet="build"] .stats { display: none; }
     .tag { display: none; }
   }
+  /* ---------- alignment + build additions ---------- */
+  .slot { border-bottom: 1px solid var(--line); padding-bottom: 0.95rem; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .seg .btn[aria-pressed="true"] { border-color: var(--sand); color: var(--sand); background: rgba(201, 180, 138, 0.12); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .field { display: flex; align-items: center; gap: 0.4rem; border: 1px solid var(--line); border-radius: 9px; background: rgba(0, 0, 0, 0.35); padding: 0 0.55rem; }
+  .field span { font: 600 0.68rem var(--font-mono); letter-spacing: 0.08em; color: var(--sand); white-space: nowrap; }
+  .field input, .scale-row input[type="number"], .select, .values textarea {
+    min-width: 0; width: 100%; box-sizing: border-box; border: 0; background: transparent; color: var(--fg);
+    font: 500 0.84rem var(--font-mono); font-variant-numeric: tabular-nums; padding: 0.55rem 0;
+  }
+  .field input:focus-visible { outline: none; }
+  .field:focus-within { border-color: var(--sand); }
+  .scale-row { display: grid; grid-template-columns: 1fr 7.2rem; gap: 0.5rem; align-items: center; }
+  .scale-row input[type="number"], .select { border: 1px solid var(--line); border-radius: 9px; background: rgba(0, 0, 0, 0.35); padding: 0.5rem 0.55rem; }
+  .select { appearance: auto; }
+  .values summary { cursor: pointer; font: 600 0.68rem var(--font-mono); letter-spacing: 0.13em; text-transform: uppercase; color: var(--sand); padding: 0.25rem 0; }
+  .values[open] { display: flex; flex-direction: column; gap: 0.5rem; }
+  .values textarea { border: 1px solid var(--line); border-radius: 9px; background: rgba(0, 0, 0, 0.35); padding: 0.5rem; font-size: 0.72rem; resize: vertical; }
+  .keys { font-size: 0.78rem; line-height: 1.7; }
+  kbd { font: 600 0.68rem var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0.05rem 0.3rem; margin: 0 0.08rem; color: var(--fg); background: rgba(239, 233, 223, 0.05); }
+  .build-body { display: flex; flex-direction: column; gap: 1.05rem; }
+  .build-body > section { display: flex; flex-direction: column; gap: 0.55rem; }
+  .info { margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; font-weight: 650; font-size: 0.92rem; border-bottom: 1px solid rgba(43, 46, 51, 0.7); padding-bottom: 0.55rem; }
+  .info span:last-child { text-align: right; }
+  .swatch:disabled, .opt:disabled { opacity: 0.28; cursor: not-allowed; }
+  .extra.off { opacity: 0.4; cursor: not-allowed; }
+  .tagx { font: 500 0.66rem var(--font-mono); color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; }
+  .code { margin: 0; font: 500 0.78rem/1.5 var(--font-mono); color: var(--muted); white-space: pre-line; overflow-wrap: anywhere; }
+  .summary { border-top: 1px solid var(--line); padding-top: 0.9rem; }
   @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 </style>
 
 </head>
 <body>
-<canvas id="stage" aria-label="3D view of the vehicle. Drag to orbit, scroll or pinch to zoom, right-drag to pan."></canvas>
+<canvas id="stage" tabindex="0" aria-label="3D view. Drag to orbit, scroll or pinch to zoom, right-drag to pan. Arrow keys nudge the selected item."></canvas>
 
 <header class="topbar">
   <div class="brand">
-    <span class="wordmark">CORELLA <b>DC</b></span>
-    <span class="tag">Configurator concept · Gaussian splat viewer</span>
+    <span class="wordmark">SPLAT <b>CONFIG</b></span>
+    <span class="tag">Splat environment · GLB vehicle · XML options</span>
   </div>
   <button class="btn btn-primary" id="btnXR" type="button" hidden>View in glasses</button>
 </header>
 
-<aside class="panel panel-left" id="modelPanel" aria-label="Model">
-  <h2>Model</h2>
-  <section>
-    <p class="model-name" id="modelName">Demo ute</p>
+<aside class="panel panel-left" id="scenePanel" aria-label="Scene">
+  <h2>Scene</h2>
+
+  <section class="slot">
+    <p class="label">Environment <span>splat · .ply .splat .spz</span></p>
+    <p class="model-name" id="envName">None loaded</p>
     <div class="btn-row">
-      <label class="btn btn-primary" for="fileInput">Open splat file</label>
-      <input type="file" id="fileInput" accept=".ply,.splat,.spz" hidden>
-      <button class="btn" id="btnDemo" type="button" hidden>Back to demo ute</button>
+      <label class="btn btn-primary" for="envFile">Open splat</label>
+      <input type="file" id="envFile" accept=".ply,.splat,.spz" hidden>
+      <button class="btn" id="envClear" type="button" hidden>Remove</button>
     </div>
     <form class="url" id="urlForm">
-      <input id="urlInput" type="url" inputmode="url" placeholder="https://…/scan.ply" aria-label="Link to a splat file">
+      <input id="urlInput" type="url" inputmode="url" placeholder="https://…/scene.ply" aria-label="Link to a splat file">
       <button class="btn" type="submit">Load</button>
     </form>
-    <p class="muted">.ply, .splat or .spz. You can also drop a file onto the page.</p>
-    <p class="status" id="modelStatus" role="status">Starting…</p>
+    <p class="status" id="envStatus" role="status"></p>
   </section>
-  <section>
-    <p class="label">Orientation</p>
+
+  <section class="slot">
+    <p class="label">Vehicle <span>.glb</span></p>
+    <p class="model-name" id="vehName">None loaded</p>
     <div class="btn-row">
+      <label class="btn btn-primary" for="vehFile">Open GLB</label>
+      <input type="file" id="vehFile" accept=".glb,model/gltf-binary" hidden>
+      <button class="btn" id="vehClear" type="button" hidden>Remove</button>
+    </div>
+    <p class="status" id="vehStatus" role="status"></p>
+  </section>
+
+  <section class="slot">
+    <p class="label">Configuration <span>.xml</span></p>
+    <p class="model-name" id="cfgName">None loaded</p>
+    <div class="btn-row">
+      <label class="btn" for="cfgFile">Open XML</label>
+      <input type="file" id="cfgFile" accept=".xml,text/xml,application/xml" hidden>
+      <button class="btn" id="cfgClear" type="button" hidden>Remove</button>
+    </div>
+    <p class="status" id="cfgStatus" role="status"></p>
+  </section>
+
+  <section class="align">
+    <p class="label">Align</p>
+    <div class="seg" role="group" aria-label="Item to align">
+      <button class="btn" type="button" data-target="veh" aria-pressed="true">Vehicle</button>
+      <button class="btn" type="button" data-target="env" aria-pressed="false">Environment</button>
+    </div>
+    <div class="fields">
+      <label class="field"><span>X</span><input type="number" id="fX" step="0.05" inputmode="decimal"></label>
+      <label class="field"><span>Y</span><input type="number" id="fY" step="0.05" inputmode="decimal"></label>
+      <label class="field"><span>Z</span><input type="number" id="fZ" step="0.05" inputmode="decimal"></label>
+      <label class="field"><span>Turn °</span><input type="number" id="fYaw" step="1" inputmode="decimal"></label>
+    </div>
+    <p class="label"><label for="fScale">Scale</label><output id="sizeOut"></output></p>
+    <div class="scale-row">
+      <input type="range" id="scaleRange" min="-4" max="4" step="0.005" value="0" aria-label="Scale (logarithmic)">
+      <input type="number" id="fScale" min="0.00001" step="any" inputmode="decimal" aria-label="Scale factor">
+    </div>
+    <div class="btn-row">
+      <button class="btn" type="button" data-mul="0.1">÷10</button>
+      <button class="btn" type="button" data-mul="0.5">÷2</button>
+      <button class="btn" type="button" data-mul="2">×2</button>
+      <button class="btn" type="button" data-mul="10">×10</button>
+    </div>
+    <div class="btn-row env-only">
       <button class="btn" id="rotX" type="button" title="Rotate 90° about X">X 90°</button>
       <button class="btn" id="rotY" type="button" title="Rotate 90° about the vertical axis">Y 90°</button>
       <button class="btn" id="rotZ" type="button" title="Rotate 90° about Z">Z 90°</button>
-      <button class="btn" id="flip" type="button">Flip</button>
+      <button class="btn" id="flip" type="button" title="Turn upside down">Flip</button>
     </div>
+    <div class="btn-row">
+      <button class="btn" id="btnCentre" type="button">Centre on grid</button>
+      <button class="btn" id="btnAlignReset" type="button">Reset</button>
+    </div>
+    <p class="label"><label for="stepSel">Key step</label></p>
+    <select id="stepSel" class="select">
+      <option value="0.005">5 mm</option>
+      <option value="0.01">1 cm</option>
+      <option value="0.05" selected>5 cm</option>
+      <option value="0.25">25 cm</option>
+      <option value="1">1 m</option>
+      <option value="10">10 m</option>
+    </select>
+    <p class="muted keys">Click the view, then: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> move · <kbd>PgUp</kbd><kbd>PgDn</kbd> up/down · <kbd>Q</kbd><kbd>E</kbd> turn 1° · <kbd>[</kbd><kbd>]</kbd> scale. <kbd>Shift</kbd> ×10, <kbd>Alt</kbd> ÷10.</p>
+    <p class="label env-only"><label for="cropIn">Trim environment beyond</label><output id="cropOut">Off</output></p>
+    <div class="scale-row env-only">
+      <input type="range" id="cropRange" min="0" max="1" step="0.001" value="0" aria-label="Trim radius">
+      <input type="number" id="cropIn" min="0" step="any" inputmode="decimal" aria-label="Trim radius in metres, 0 for off">
+    </div>
+    <details class="values">
+      <summary>Alignment values</summary>
+      <textarea id="alignText" rows="7" spellcheck="false" aria-label="Alignment as JSON"></textarea>
+      <div class="btn-row">
+        <button class="btn" id="alignApply" type="button">Apply</button>
+        <button class="btn" id="alignSave" type="button">Download</button>
+        <label class="btn" for="alignFile">Load file</label>
+        <input type="file" id="alignFile" accept=".json,application/json" hidden>
+      </div>
+      <p class="muted">Saved automatically in this browser for each environment and vehicle pair.</p>
+    </details>
   </section>
-  <section>
-    <p class="label"><label for="scaleRange">Size</label><output id="scaleOut">×1.00</output></p>
-    <input type="range" id="scaleRange" min="-3" max="3" step="0.05" value="0">
-    <button class="btn" id="btnFit" type="button">Fit to 5.3 m long</button>
-  </section>
-  <section>
-    <p class="label"><label for="cropRange">Trim surroundings</label><output id="cropOut">Off</output></p>
-    <input type="range" id="cropRange" min="0" max="15" step="0.1" value="0">
-    <p class="label"><label for="floorRange">Trim floor</label><output id="floorOut">Off</output></p>
-    <input type="range" id="floorRange" min="0" max="0.6" step="0.01" value="0">
-  </section>
+
   <section>
     <p class="label">View</p>
-    <label class="check"><input type="checkbox" id="turntable"> Turntable</label>
-    <button class="btn" id="btnReset" type="button">Reset view</button>
+    <label class="check"><input type="checkbox" id="gridChk" checked> Ground grid</label>
+    <label class="check"><input type="checkbox" id="shadowChk" checked> Contact shadow</label>
+    <p class="label"><label for="expRange">Vehicle brightness</label><output id="expOut">1.00</output></p>
+    <input type="range" id="expRange" min="-1.5" max="1.5" step="0.05" value="0">
+    <div class="btn-row">
+      <button class="btn" id="btnReset" type="button">Frame vehicle</button>
+      <button class="btn" id="btnFrameEnv" type="button">Frame environment</button>
+    </div>
     <p class="status" id="xrStatus">Checking for glasses…</p>
   </section>
 </aside>
 
 <aside class="panel panel-right" id="buildPanel" aria-label="Build">
-  <h2>Build</h2>
-  <section>
-    <p class="label">Grade</p>
-    <div class="grades" id="gradeList"></div>
-  </section>
-  <section>
-    <p class="label">Paint <span id="paintName"></span></p>
-    <div class="swatches" id="paintList"></div>
-  </section>
-  <section>
-    <p class="label">Wheels</p>
-    <div class="opts" id="wheelList"></div>
-  </section>
-  <section>
-    <p class="label">Accessories</p>
-    <div class="extras" id="extraList"></div>
-  </section>
-  <p class="note" id="scanNote" hidden>On a scanned vehicle these options are a mock-up. Each one needs its own scanned or modelled part before it can change the scan.</p>
-  <section class="summary">
-    <p class="label">Estimated drive-away</p>
-    <p class="price" id="price">$0</p>
-    <p class="muted" id="priceNote">Concept pricing for illustration only.</p>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btnSave" type="button">Save build</button>
-      <button class="btn" id="btnShare" type="button">Share</button>
-    </div>
+  <h2 id="buildTitle">Build</h2>
+  <div id="buildBody" class="build-body"></div>
+  <section class="summary" id="summary" hidden>
+    <p class="label">Selected</p>
+    <p class="model-name" id="sumTitle"></p>
+    <p class="code" id="sumVariant"></p>
   </section>
 </aside>
 
 <p class="stats" id="stats"></p>
 <nav class="tabs" aria-label="Panels">
-  <button class="btn" type="button" data-sheet="model" aria-pressed="false">Model</button>
+  <button class="btn" type="button" data-sheet="scene" aria-pressed="false">Scene</button>
   <button class="btn" type="button" data-sheet="build" aria-pressed="false">Build</button>
 </nav>
-<div class="drop" id="drop" hidden>Drop to load the splat</div>
+<div class="drop" id="drop" hidden>Drop splat, GLB, XML or alignment files</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -329,6 +411,16 @@ const M4 = {
   rotX(a) { const c = Math.cos(a), s = Math.sin(a), m = M4.ident(); m[5] = c; m[6] = s; m[9] = -s; m[10] = c; return m; },
   rotY(a) { const c = Math.cos(a), s = Math.sin(a), m = M4.ident(); m[0] = c; m[2] = -s; m[8] = s; m[10] = c; return m; },
   rotZ(a) { const c = Math.cos(a), s = Math.sin(a), m = M4.ident(); m[0] = c; m[1] = s; m[4] = -s; m[5] = c; return m; },
+  fromTRS(t, q, s) {
+    const [x, y, z, w] = q || [0, 0, 0, 1], [sx, sy, sz] = s || [1, 1, 1], m = new Float32Array(16);
+    m[0] = (1 - 2 * (y * y + z * z)) * sx; m[1] = 2 * (x * y + w * z) * sx; m[2] = 2 * (x * z - w * y) * sx;
+    m[4] = 2 * (x * y - w * z) * sy; m[5] = (1 - 2 * (x * x + z * z)) * sy; m[6] = 2 * (y * z + w * x) * sy;
+    m[8] = 2 * (x * z + w * y) * sz; m[9] = 2 * (y * z - w * x) * sz; m[10] = (1 - 2 * (x * x + y * y)) * sz;
+    if (t) { m[12] = t[0]; m[13] = t[1]; m[14] = t[2]; }
+    m[15] = 1;
+    return m;
+  },
+  det3(m) { return m[0] * (m[5] * m[10] - m[6] * m[9]) - m[4] * (m[1] * m[10] - m[2] * m[9]) + m[8] * (m[1] * m[6] - m[2] * m[5]); },
   apply(m, v) { return [m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12], m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13], m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14]]; },
   dir(m, v) { return [m[0] * v[0] + m[4] * v[1] + m[8] * v[2], m[1] * v[0] + m[5] * v[1] + m[9] * v[2], m[2] * v[0] + m[6] * v[1] + m[10] * v[2]]; },
 };
@@ -568,7 +660,7 @@ function compile(vs, fs) {
   return { p, u };
 }
 
-const R = { splat: null, disc: null, panel: null, line: null };
+const R = { splat: null, shadow: null, grid: null, pbr: null, panel: null, line: null };
 function buildPrograms() {
   // Each splat is an instanced quad. The 3D covariance comes from scale + rotation, is projected with the
   // perspective Jacobian into a 2D ellipse, and the quad is stretched along the ellipse's axes.
@@ -577,8 +669,7 @@ precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D uTex;
 uniform mat4 uProj; uniform mat4 uView; uniform mat4 uFit;
 uniform vec2 uFocal; uniform vec2 uViewport;
-uniform vec3 uPaint; uniform vec3 uTrim; uniform float uTrimSpec;
-uniform int uHidden; uniform float uCrop; uniform float uFloorCut; uniform float uMaxPx;
+uniform float uCrop; uniform vec2 uCropC; uniform float uMaxPx;
 layout(location=0) in vec2 aCorner;
 layout(location=1) in uint aIndex;
 out vec4 vColor; out vec2 vPos;
@@ -589,16 +680,14 @@ void main() {
   uvec4 t1 = texelFetch(uTex, tc + ivec2(1, 0), 0);
   vec3 p = uintBitsToFloat(t0.xyz);
   vec2 qzg = unpackHalf2x16(t1.w);
-  int group = int(qzg.y + 0.5);
-  if (group > 0 && ((uHidden >> group) & 1) == 1) { cull(); return; }
-  if (uCrop > 0.0 || uFloorCut > -1e3) {
+  if (uCrop > 0.0) {
     vec3 f = (uFit * vec4(p, 1.0)).xyz;
-    if ((uCrop > 0.0 && length(f.xz) > uCrop) || f.y < uFloorCut) { cull(); return; }
+    if (length(f.xz - uCropC) > uCrop) { cull(); return; }
   }
   vec4 cam = uView * vec4(p, 1.0);
   vec4 clipPos = uProj * cam;
   float lim = 1.2 * clipPos.w;
-  if (cam.z > -0.02 || clipPos.x < -lim || clipPos.x > lim || clipPos.y < -lim || clipPos.y > lim) { cull(); return; }
+  if (cam.z > -0.01 || clipPos.z > clipPos.w || clipPos.x < -lim || clipPos.x > lim || clipPos.y < -lim || clipPos.y > lim) { cull(); return; }
   vec2 sxy = unpackHalf2x16(t1.x), szw = unpackHalf2x16(t1.y), qxy = unpackHalf2x16(t1.z);
   vec4 q = normalize(vec4(qxy, qzg.x, szw.y));
   float x = q.x, y = q.y, z = q.z, w = q.w;
@@ -621,12 +710,10 @@ void main() {
   vec2 minor = min(sqrt(2.0 * l2), uMaxPx) * vec2(dv.y, -dv.x);
   uint cw = t0.w;
   vec4 col = vec4(float(cw & 255u), float((cw >> 8) & 255u), float((cw >> 16) & 255u), float(cw >> 24)) / 255.0;
-  if (group == 1) col.rgb = uPaint * col.r + vec3(col.g);
-  else if (group == 12) col.rgb = uTrim * col.r + vec3(col.g * uTrimSpec);
   vColor = col;
   vPos = aCorner;
   vec2 center = clipPos.xy / clipPos.w;
-  gl_Position = vec4(center + (aCorner.x * major + aCorner.y * minor) * 2.0 / uViewport, 0.0, 1.0);
+  gl_Position = vec4(center + (aCorner.x * major + aCorner.y * minor) * 2.0 / uViewport, clamp(clipPos.z / clipPos.w, -1.0, 1.0), 1.0);
 }`, `#version 300 es
 precision highp float;
 in vec4 vColor; in vec2 vPos;
@@ -639,23 +726,145 @@ void main() {
   o = vec4(vColor.rgb * B, B);
 }`);
 
-  // turntable ring + soft contact shadow, lying on the stage floor
-  R.disc = compile(`#version 300 es
+  // soft contact shadow under the vehicle (darkens whatever is behind it)
+  R.shadow = compile(`#version 300 es
 layout(location=0) in vec2 aCorner;
-uniform mat4 uProj; uniform mat4 uView; uniform float uRadius;
+uniform mat4 uProj; uniform mat4 uView; uniform mat4 uModel;
 out vec2 vUV;
-void main() { vUV = aCorner; gl_Position = uProj * uView * vec4(aCorner.x * uRadius, 0.0, aCorner.y * uRadius, 1.0); }`, `#version 300 es
+void main() { vUV = aCorner; gl_Position = uProj * uView * uModel * vec4(aCorner.x, 0.0, aCorner.y, 1.0); }`, `#version 300 es
 precision mediump float;
-in vec2 vUV; uniform vec3 uColor; uniform float uShadow; uniform float uRing;
+in vec2 vUV; uniform float uStrength;
 out vec4 o;
 void main() {
-  float r = length(vUV);
-  if (r > 1.0) discard;
-  float ring = (exp(-pow((r - 0.92) / 0.012, 2.0)) * 0.7 + exp(-pow((r - 0.92) / 0.09, 2.0)) * 0.12) * uRing;
-  float shadow = (1.0 - smoothstep(0.05, 0.62, r)) * uShadow;
-  o = vec4(uColor * ring, clamp(ring + shadow, 0.0, 1.0));
+  vec2 q = max(abs(vUV) - vec2(0.55, 0.7), 0.0) / vec2(0.45, 0.3);
+  float a = (1.0 - smoothstep(0.0, 1.0, length(q))) * uStrength;
+  o = vec4(0.0, 0.0, 0.0, a);
 }`);
 
+  // alignment grid on the stage floor: 1 m lines, brighter every 5 m, axis lines tinted
+  R.grid = compile(`#version 300 es
+layout(location=0) in vec2 aCorner;
+uniform mat4 uProj; uniform mat4 uView; uniform float uSize; uniform vec3 uCentre;
+out vec2 vXZ;
+void main() { vXZ = uCentre.xz + aCorner * uSize; gl_Position = uProj * uView * vec4(vXZ.x, uCentre.y, vXZ.y, 1.0); }`, `#version 300 es
+precision highp float;
+in vec2 vXZ; uniform float uSize; uniform vec3 uCentre; uniform float uStep; uniform float uAlpha;
+out vec4 o;
+float lines(vec2 p, float s) { vec2 g = abs(fract(p / s - 0.5) - 0.5) / fwidth(p / s); return 1.0 - min(min(g.x, g.y), 1.0); }
+void main() {
+  float fade = 1.0 - smoothstep(0.55, 1.0, length(vXZ - uCentre.xz) / uSize);
+  float minor = lines(vXZ, uStep) * 0.35, major = lines(vXZ, uStep * 5.0);
+  vec2 ax = abs(vXZ) / fwidth(vXZ);
+  float axX = 1.0 - min(ax.y / 1.5, 1.0), axZ = 1.0 - min(ax.x / 1.5, 1.0);
+  vec3 c = vec3(0.79, 0.71, 0.54);
+  float a = max(minor, major * 0.8);
+  c = mix(c, vec3(0.95, 0.42, 0.36), axX); c = mix(c, vec3(0.4, 0.62, 0.95), axZ);
+  a = max(a, max(axX, axZ));
+  a *= fade * uAlpha;
+  if (a < 0.004) discard;
+  o = vec4(c * a, a);
+}`);
+
+  // vehicle: PBR metallic-roughness lit by a procedural studio (tinted by the environment splat's colours)
+  R.pbr = compile(`#version 300 es
+layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNormal; layout(location=2) in vec2 aUV0;
+layout(location=3) in vec2 aUV1; layout(location=4) in vec4 aColor;
+uniform mat4 uProj; uniform mat4 uView; uniform mat4 uModel;
+out vec3 vPos; out vec3 vN; out vec2 vUV0; out vec2 vUV1; out vec4 vCol;
+void main() {
+  vec4 w = uModel * vec4(aPos, 1.0);
+  vPos = w.xyz; vN = mat3(uModel) * aNormal; vUV0 = aUV0; vUV1 = aUV1; vCol = aColor;
+  gl_Position = uProj * uView * w;
+}`, `#version 300 es
+precision highp float;
+layout(std140) uniform Mat { vec4 mBase; vec4 mEmisCut; vec4 mPBR; vec4 mCoat; vec4 mFlags; vec4 mFlags2; vec4 mTT[10]; };
+uniform sampler2D t0, t1, t2, t3, t4;
+uniform vec3 uCam; uniform vec3 uSkyTop; uniform vec3 uSkyHor; uniform vec3 uGround;
+uniform float uExposure; uniform int uHasN;
+in vec3 vPos; in vec3 vN; in vec2 vUV0; in vec2 vUV1; in vec4 vCol;
+out vec4 o;
+const float PI = 3.14159265;
+vec2 tuv(int k) { vec4 r0 = mTT[k * 2], r1 = mTT[k * 2 + 1]; vec3 h = vec3(r0.w > 0.5 ? vUV1 : vUV0, 1.0); return vec2(dot(r0.xyz, h), dot(r1.xyz, h)); }
+vec3 env(vec3 d, float r) {
+  float y = d.y, soft = 0.04 + r * 0.7;
+  vec3 c = mix(uGround, uSkyHor, smoothstep(-soft, soft * 0.5, y));
+  c = mix(c, uSkyTop, smoothstep(0.15, 1.0, y));
+  float g = 1.0 - r * 0.8;
+  // a narrow overhead strip softbox along the car's length, two side boxes and a soft horizon band
+  float strip = smoothstep(0.88 - r * 0.5, 0.93 - r * 0.3, y) * (1.0 - smoothstep(0.08 + r * 0.5, 0.13 + r * 0.6, abs(d.x)));
+  float s1 = smoothstep(0.955 - r * 0.6, 0.985 - r * 0.45, dot(d, normalize(vec3(0.85, 0.35, 0.4))));
+  float s2 = smoothstep(0.955 - r * 0.6, 0.985 - r * 0.45, dot(d, normalize(vec3(-0.8, 0.3, -0.5))));
+  float band = exp(-pow(y / (0.03 + r * 0.25), 2.0)) * 0.35;
+  return c + (vec3(1.8) * strip + vec3(1.1, 1.05, 1.0) * s1 + vec3(0.7, 0.75, 0.85) * s2) * g + uSkyHor * band * g;
+}
+vec3 envBRDF(vec3 F0, float r, float NoV) {
+  vec4 rr = r * vec4(-1.0, -0.0275, -0.572, 0.022) + vec4(1.0, 0.0425, 1.04, -0.04);
+  float a004 = min(rr.x * rr.x, exp2(-9.28 * NoV)) * rr.x + rr.y;
+  vec2 AB = vec2(-1.04, 1.04) * a004 + rr.zw;
+  return F0 * AB.x + AB.y;
+}
+vec3 light(vec3 N, vec3 V, vec3 L, vec3 Lc, vec3 diff, vec3 F0, float r) {
+  float NoL = max(dot(N, L), 0.0);
+  if (NoL <= 0.0) return vec3(0.0);
+  vec3 H = normalize(L + V);
+  float NoH = max(dot(N, H), 0.0), NoV = max(dot(N, V), 1e-4), VoH = max(dot(V, H), 0.0);
+  float a = r * r, a2 = a * a, dd = NoH * NoH * (a2 - 1.0) + 1.0;
+  float D = a2 / (PI * dd * dd);
+  float Vis = 0.5 / (NoL * sqrt(NoV * NoV * (1.0 - a2) + a2) + NoV * sqrt(NoL * NoL * (1.0 - a2) + a2));
+  vec3 F = F0 + (1.0 - F0) * pow(1.0 - VoH, 5.0);
+  return (diff / PI + D * Vis * F) * NoL * Lc;
+}
+void main() {
+  vec4 base = mBase * vCol;
+  if (mFlags.x > 0.5) base *= texture(t0, tuv(0));
+  if (mCoat.w > 0.5 && mCoat.w < 1.5 && base.a < mEmisCut.w) discard;
+  vec3 emis = mEmisCut.rgb;
+  if (mFlags2.x > 0.5) emis *= texture(t4, tuv(4)).rgb;
+  float a = mCoat.w > 1.5 ? base.a : 1.0;
+  vec3 col;
+  if (mFlags2.z > 0.5) {
+    col = base.rgb * a + emis;
+  } else {
+    float metal = mPBR.x, rough = mPBR.y;
+    if (mFlags.y > 0.5) { vec4 mr = texture(t1, tuv(1)); rough *= mr.g; metal *= mr.b; }
+    rough = clamp(rough, 0.045, 1.0);
+    vec3 Ng = uHasN == 1 ? normalize(vN) : normalize(cross(dFdx(vPos), dFdy(vPos)));
+    if (!gl_FrontFacing) Ng = -Ng;
+    vec3 N = Ng;
+    if (mFlags.z > 0.5) {
+      vec2 uv = tuv(2);
+      vec3 t = texture(t2, uv).xyz * 2.0 - 1.0;
+      t.xy *= mPBR.z; t.y = -t.y;
+      vec3 dp1 = dFdx(vPos), dp2 = dFdy(vPos); vec2 du1 = dFdx(uv), du2 = dFdy(uv);
+      vec3 p2 = cross(dp2, Ng), p1 = cross(Ng, dp1);
+      vec3 T = p2 * du1.x + p1 * du2.x, B = p2 * du1.y + p1 * du2.y;
+      float m = max(dot(T, T), dot(B, B));
+      if (m > 1e-20) N = normalize(mat3(T * inversesqrt(m), B * inversesqrt(m), Ng) * t);
+    }
+    float ao = mFlags.w > 0.5 ? mix(1.0, texture(t3, tuv(3)).r, mPBR.w) : 1.0;
+    vec3 V = normalize(uCam - vPos);
+    float NoV = clamp(dot(N, V), 1e-4, 1.0);
+    vec3 F0 = mix(vec3(mCoat.z), base.rgb, metal), diff = base.rgb * (1.0 - metal);
+    vec3 key = normalize(vec3(0.35, 0.9, 0.3)), fill = normalize(vec3(-0.6, 0.35, -0.55));
+    vec3 c = light(N, V, key, vec3(2.0, 1.95, 1.85), diff, F0, rough) + light(N, V, fill, vec3(0.45, 0.5, 0.6), diff, F0, rough);
+    c += diff * env(N, 1.0) * 0.45 * ao;
+    vec3 spec = env(reflect(-V, N), rough) * envBRDF(F0, rough, NoV) * ao;
+    vec3 dif = c;
+    if (mCoat.x > 0.0 && mCoat.w < 1.5) {
+      float cr = clamp(mCoat.y, 0.03, 1.0), NoVc = clamp(dot(Ng, V), 1e-4, 1.0);
+      float Fc = (0.04 + 0.96 * pow(1.0 - NoVc, 5.0)) * mCoat.x;
+      dif *= 1.0 - Fc; spec *= 1.0 - Fc;
+      spec += env(reflect(-V, Ng), cr) * Fc;
+    }
+    col = dif * a + spec + emis;
+  }
+  col *= uExposure;
+  col = clamp((col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14), 0.0, 1.0);
+  o = vec4(pow(col, vec3(1.0 / 2.2)), a);
+}`);
+  gl.uniformBlockBinding(R.pbr.p, gl.getUniformBlockIndex(R.pbr.p, 'Mat'), 0);
+  const mk = (px) => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(px)); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); return t; };
+  whiteTex = mk([255, 255, 255, 255]); flatNormTex = mk([128, 128, 255, 255]);
   // in-glasses configurator panel
   R.panel = compile(`#version 300 es
 layout(location=0) in vec2 aCorner;
@@ -762,387 +971,696 @@ function uploadSplats(S) {
   sorter.worker.postMessage({ type: 'init', pos: S.pos.slice(), n: S.n });
 }
 
-/* ---------------- procedural demo ute ----------------
-   A dual-cab ute sampled as ~70k flat Gaussians with studio lighting baked in.
-   Groups let the configurator recolour or hide parts:
-   1 paint, 2 bull bar, 3 light bar, 4 roof racks, 5 snorkel, 6 tub cover, 7 tow bar,
-   8 alloy wheel faces, 9 steel wheel faces, 10 all-terrain tread, 11 road tread, 12 trim (chrome/black) */
-const G = { BASE: 0, PAINT: 1, BULLBAR: 2, LIGHTBAR: 3, RACKS: 4, SNORKEL: 5, COVER: 6, TOWBAR: 7, ALLOY: 8, STEEL: 9, AT: 10, ROAD: 11, TRIM: 12 };
+/* ---------------- GLB vehicle: parse, upload, configure, draw ----------------
+   A compact glTF 2.0 renderer: binary .glb, node hierarchy, PBR metallic-roughness with a procedural studio
+   environment, normal maps (derivative tangents), clearcoat, alpha blend/mask, KHR_texture_transform and
+   KHR_materials_variants. Materials live in one uniform buffer so a draw only switches a range. */
+const GLB_TEX_CAP = 2048;
+const GLB_EXT_OK = new Set(['KHR_texture_transform', 'KHR_materials_variants', 'KHR_materials_clearcoat', 'KHR_materials_specular',
+  'KHR_materials_ior', 'KHR_materials_emissive_strength', 'KHR_mesh_quantization', 'KHR_materials_unlit']);
+const ATTR_LOC = { POSITION: 0, NORMAL: 1, TEXCOORD_0: 2, TEXCOORD_1: 3, COLOR_0: 4 };
+const COMP_N = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 };
+const COMP_BYTES = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 };
+const MAT_VEC4S = 16;
 
-function buildDemoUte() {
-  const rnd = mulberry(20261007);
-  const DS = 0.021;
-  const out = [];
-  const L1 = vnorm([0.45, 0.85, 0.35]), L2 = vnorm([-0.6, 0.4, -0.5]);
-  const shadeOf = (n, y) => (0.26 + 0.6 * Math.max(0, vdot(n, L1)) + 0.2 * Math.max(0, vdot(n, L2)) + 0.12 * n[1]) * (0.72 + 0.28 * clamp((y - 0.35) / 0.6, 0, 1));
-  const specOf = (n) => 0.45 * Math.pow(Math.max(0, n[1]), 10) + 0.28 * Math.pow(Math.max(0, vdot(n, L1)), 24);
-  const MAT = {
-    paint: { g: G.PAINT }, trim: { g: G.TRIM },
-    black: { c: [0.055, 0.055, 0.06], s: 0.06 }, satin: { c: [0.1, 0.1, 0.11], s: 0.1 },
-    glass: { c: [0.04, 0.05, 0.06], s: 0.3, glass: true }, rubber: { c: [0.05, 0.05, 0.05], s: 0.02 },
-    tub: { c: [0.13, 0.13, 0.14], s: 0.03 }, light: { c: [1.0, 0.97, 0.9], emit: true }, led: { c: [0.92, 0.96, 1.0], emit: true },
-    tail: { c: [0.75, 0.08, 0.06], s: 0.2 }, amber: { c: [0.95, 0.55, 0.1], s: 0.2 },
-    alloy: { c: [0.66, 0.68, 0.7], s: 0.45 }, steel: { c: [0.09, 0.09, 0.1], s: 0.1 }, brake: { c: [0.22, 0.22, 0.23], s: 0.05 },
-    grille: { c: [0.07, 0.07, 0.075], s: 0.05 }, under: { c: [0.03, 0.03, 0.03], s: 0 }, chrome: { c: [0.8, 0.82, 0.84], s: 0.7 },
+function texTransformRows(ti) {
+  const t = (ti && ti.extensions && ti.extensions.KHR_texture_transform) || null;
+  const o = (t && t.offset) || [0, 0], r = (t && t.rotation) || 0, s = (t && t.scale) || [1, 1];
+  const c = Math.cos(r), sn = Math.sin(r);
+  // uv' = T * R * S * uv  (glTF convention: R = [c s; -s c])
+  const uvSet = t && t.texCoord !== undefined ? t.texCoord : (ti && ti.texCoord) || 0;
+  return [c * s[0], sn * s[1], o[0], uvSet, -sn * s[0], c * s[1], o[1], 0];
+}
+
+async function parseGLB(buf, name, progress) {
+  const say = progress || (() => {});
+  const dv = new DataView(buf);
+  if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546c67) throw new Error('This isn’t a binary glTF (.glb) file.');
+  if (dv.getUint32(4, true) !== 2) throw new Error('Only glTF 2.0 files are supported.');
+  let off = 12, J = null, bin = null;
+  while (off + 8 <= buf.byteLength) {
+    const len = dv.getUint32(off, true), type = dv.getUint32(off + 4, true);
+    if (type === 0x4e4f534a) J = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, off + 8, len)));
+    else if (type === 0x004e4942 && !bin) bin = new Uint8Array(buf, off + 8, len);
+    off += 8 + len;
+  }
+  if (!J) throw new Error('The .glb has no scene description.');
+  const need = (J.extensionsRequired || []).filter((e) => !GLB_EXT_OK.has(e));
+  if (need.length) throw new Error(`This file needs ${need.join(', ')}, which this viewer can’t decode. Re-export it without mesh or texture compression.`);
+  const bvData = (i) => {
+    const bv = J.bufferViews[i];
+    if ((bv.buffer || 0) !== 0 || !bin) throw new Error('This file points to separate .bin or image files. Export everything into a single .glb.');
+    return bin.subarray(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength);
   };
-  function add(p, n, mk, grp) {
-    const m = MAT[mk];
-    if (!m) return;
-    const shade = shadeOf(n, p[1]);
-    let r, g, b, a = 245, group = grp || 0;
-    if (m.g) { group = grp || m.g; r = shade * 0.95; g = specOf(n) * (m.g === G.TRIM ? 1.0 : 1); b = 0; }
-    else if (m.emit) { [r, g, b] = m.c; a = 255; }
-    else {
-      const k = shade * (0.94 + rnd() * 0.12);
-      const sp = specOf(n) * m.s * 2;
-      r = m.c[0] * k + sp; g = m.c[1] * k + sp; b = m.c[2] * k + sp;
-      if (m.glass) { const sky = 0.03 + 0.12 * Math.max(0, n[1]) + 0.06 * Math.max(0, vdot(n, L1)); r += sky * 0.8; g += sky * 0.9; b += sky; a = 235; }
+
+  /* geometry */
+  say('Uploading geometry…');
+  gl.bindVertexArray(null);
+  const glBufs = new Map();
+  const getBuf = (bvi, target) => {
+    const k = bvi + ':' + target;
+    let b = glBufs.get(k);
+    if (!b) { b = gl.createBuffer(); gl.bindBuffer(target, b); gl.bufferData(target, bvData(bvi), gl.STATIC_DRAW); glBufs.set(k, b); }
+    return b;
+  };
+  const zeroBuf = (a) => {
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, a.count * COMP_N[a.type] * COMP_BYTES[a.componentType], gl.STATIC_DRAW);
+    glBufs.set('zero:' + glBufs.size, b); return b;
+  };
+  let tris = 0;
+  const meshes = (J.meshes || []).map((m) => m.primitives.map((p) => {
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    for (const [attr, ai] of Object.entries(p.attributes)) {
+      const loc = ATTR_LOC[attr];
+      if (loc === undefined) continue;
+      const a = J.accessors[ai];
+      const b = a.bufferView === undefined ? zeroBuf(a) : getBuf(a.bufferView, gl.ARRAY_BUFFER);
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.enableVertexAttribArray(loc);
+      const stride = a.bufferView === undefined ? 0 : J.bufferViews[a.bufferView].byteStride || 0;
+      const norm = !!a.normalized || (attr === 'COLOR_0' && a.componentType !== 5126);
+      gl.vertexAttribPointer(loc, COMP_N[a.type], a.componentType, norm, stride, a.byteOffset || 0);
     }
-    // quaternion turning the splat's thin z axis onto the surface normal
-    let q;
-    if (n[2] < -0.9999) q = [1, 0, 0, 0];
-    else q = [-n[1], n[0], 0, 1 + n[2]];
-    const st = DS * (0.76 + rnd() * 0.1);
-    out.push(p[0] + (rnd() - 0.5) * DS * 0.25, p[1] + (rnd() - 0.5) * DS * 0.25, p[2] + (rnd() - 0.5) * DS * 0.25,
-      st, st, 0.0035, q[0], q[1], q[2], q[3], clampByte(r), clampByte(g), clampByte(b), a, group);
-  }
-  // bilinear patch: corners c00 c10 c01 c11, outward hint flips the normal if needed
-  function patch(c00, c10, c01, c11, out_, mat, grp, fn) {
-    const lu = Math.max(vlen(vsub(c10, c00)), vlen(vsub(c11, c01))), lv = Math.max(vlen(vsub(c01, c00)), vlen(vsub(c11, c10)));
-    const nu = Math.max(1, Math.round(lu / DS)), nv = Math.max(1, Math.round(lv / DS));
-    for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) {
-      const s = clamp((i + (rnd() - 0.5) * 0.5) / nu, 0, 1), t = clamp((j + (rnd() - 0.5) * 0.5) / nv, 0, 1);
-      const a0 = vadd(vmul(c00, 1 - s), vmul(c10, s)), a1 = vadd(vmul(c01, 1 - s), vmul(c11, s));
-      const p = vadd(vmul(a0, 1 - t), vmul(a1, t));
-      const du = vsub(vadd(vmul(c10, 1 - t), vmul(c11, t)), vadd(vmul(c00, 1 - t), vmul(c01, t)));
-      const dv = vsub(a1, a0);
-      let n = vnorm(vcross(du, dv));
-      if (vdot(n, out_) < 0) n = vmul(n, -1);
-      const m = fn ? fn(p, n) : mat;
-      if (m) add(p, n, m, grp);
+    const pa = J.accessors[p.attributes.POSITION];
+    let count = pa.count, idxType = 0, idxOff = 0;
+    if (p.indices !== undefined) {
+      const a = J.accessors[p.indices];
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, getBuf(a.bufferView, gl.ELEMENT_ARRAY_BUFFER));
+      count = a.count; idxType = a.componentType; idxOff = a.byteOffset || 0;
     }
+    gl.bindVertexArray(null);
+    const mode = p.mode === undefined ? 4 : p.mode;
+    if (mode === 4) tris += count / 3;
+    const variants = new Map();
+    const ext = p.extensions && p.extensions.KHR_materials_variants;
+    if (ext) for (const mp of ext.mappings || []) for (const v of mp.variants) variants.set(v, mp.material);
+    return { vao, count, idxType, idxOff, mode, mat0: p.material === undefined ? -1 : p.material, mat: -1, variants,
+      min: pa.min || [-1, -1, -1], max: pa.max || [1, 1, 1], hasNormal: 'NORMAL' in p.attributes };
+  }));
+  for (const list of meshes) for (const pr of list) pr.mat = pr.mat0;
+
+  /* nodes */
+  const nodes = (J.nodes || []).map((n, i) => ({
+    i, name: n.name || '', mesh: n.mesh, children: n.children || [], parent: -1, visible: true,
+    local: n.matrix ? new Float32Array(n.matrix) : M4.fromTRS(n.translation, n.rotation, n.scale), world: null, wm: null, flip: false,
+  }));
+  for (const n of nodes) for (const c of n.children) nodes[c].parent = n.i;
+  const sc = J.scenes && J.scenes[J.scene || 0];
+  const roots = sc ? sc.nodes : nodes.filter((n) => n.parent < 0).map((n) => n.i);
+  const walk = (i, parentM) => { const n = nodes[i]; n.world = M4.mul(parentM, n.local); n.flip = M4.det3(n.world) < 0; for (const c of n.children) walk(c, n.world); };
+  for (const r of roots) walk(r, M4.ident());
+  const byName = new Map();
+  for (const n of nodes) { if (!byName.has(n.name)) byName.set(n.name, []); byName.get(n.name).push(n.i); }
+  // material swatch spheres and similar helpers are never part of the car
+  for (const n of nodes) if (/materialholder/i.test(n.name)) n.visible = false;
+
+  /* materials */
+  const srcMats = (J.materials || []).concat([{ name: '__default', pbrMetallicRoughness: { metallicFactor: 0, roughnessFactor: 0.6 } }]);
+  const defaultMat = srcMats.length - 1;
+  for (const list of meshes) for (const pr of list) { if (pr.mat0 < 0) pr.mat0 = pr.mat = defaultMat; }
+  const texNeed = new Map(); // texture index -> {srgb, lin}
+  const want = (ti, srgb) => { if (!ti || ti.index === undefined) return; const e = texNeed.get(ti.index) || { srgb: false, lin: false }; if (srgb) e.srgb = true; else e.lin = true; texNeed.set(ti.index, e); };
+  const mats = srcMats.map((m, i) => {
+    const pbr = m.pbrMetallicRoughness || {}, ex = m.extensions || {};
+    const cc = ex.KHR_materials_clearcoat, sp = ex.KHR_materials_specular, ior = ex.KHR_materials_ior;
+    const iorV = ior && ior.ior !== undefined ? ior.ior : 1.5;
+    let f0 = Math.pow((iorV - 1) / (iorV + 1), 2);
+    if (sp) f0 *= (sp.specularFactor === undefined ? 1 : sp.specularFactor) * Math.max(...(sp.specularColorFactor || [1, 1, 1]));
+    const emisK = (ex.KHR_materials_emissive_strength && ex.KHR_materials_emissive_strength.emissiveStrength) || 1;
+    const mode = m.alphaMode === 'MASK' ? 1 : m.alphaMode === 'BLEND' ? 2 : 0;
+    want(pbr.baseColorTexture, true); want(pbr.metallicRoughnessTexture, false); want(m.normalTexture, false); want(m.occlusionTexture, false); want(m.emissiveTexture, true);
+    return {
+      i, name: m.name || 'material ' + i, mode, doubleSided: !!m.doubleSided,
+      base: pbr.baseColorFactor || [1, 1, 1, 1],
+      emis: (m.emissiveFactor || [0, 0, 0]).map((v) => v * emisK),
+      cutoff: m.alphaCutoff === undefined ? 0.5 : m.alphaCutoff,
+      metal: pbr.metallicFactor === undefined ? 1 : pbr.metallicFactor,
+      rough: pbr.roughnessFactor === undefined ? 1 : pbr.roughnessFactor,
+      normScale: m.normalTexture && m.normalTexture.scale !== undefined ? m.normalTexture.scale : 1,
+      occStrength: m.occlusionTexture && m.occlusionTexture.strength !== undefined ? m.occlusionTexture.strength : 1,
+      coat: cc ? (cc.clearcoatFactor || 0) : 0, coatRough: cc ? (cc.clearcoatRoughnessFactor || 0) : 0, f0,
+      unlit: !!ex.KHR_materials_unlit,
+      slots: [pbr.baseColorTexture, pbr.metallicRoughnessTexture, m.normalTexture, m.occlusionTexture, m.emissiveTexture],
+      tex: [null, null, null, null, null],
+    };
+  });
+
+  /* textures: decode each image once, upload the colour-space variants it's needed in */
+  const texGL = new Map();
+  const imgUsers = new Map();
+  for (const [ti, need2] of texNeed) {
+    const t = J.textures[ti];
+    if (!t || t.source === undefined) continue;
+    if (!imgUsers.has(t.source)) imgUsers.set(t.source, []);
+    imgUsers.get(t.source).push([ti, need2]);
   }
-  const rect = (o, u, v, ul, vl, out_, mat, grp, fn) => patch(o, vadd(o, vmul(u, ul)), vadd(o, vmul(v, vl)), vadd(vadd(o, vmul(u, ul)), vmul(v, vl)), out_, mat, grp, fn);
-  function tube(p0, p1, r, mat, grp) {
-    const d = vsub(p1, p0), L = vlen(d), a = vnorm(d);
-    const e1 = vnorm(vcross(a, Math.abs(a[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), e2 = vcross(a, e1);
-    const nl = Math.max(1, Math.round(L / DS)), nc = Math.max(6, Math.round(TAU * r / DS));
-    for (let i = 0; i <= nl; i++) for (let j = 0; j < nc; j++) {
-      const ang = (j + rnd() * 0.5) / nc * TAU;
-      const n = vadd(vmul(e1, Math.cos(ang)), vmul(e2, Math.sin(ang)));
-      add(vadd(vadd(p0, vmul(d, (i + rnd() * 0.5) / nl * (nl / (nl + 0.5)))), vmul(n, r)), n, mat, grp);
+  const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+  const maxAniso = aniso ? Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)) : 0;
+  const cap = Math.min(GLB_TEX_CAP, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+  let texBytes = 0, failed = 0, done = 0;
+  const jobs = [...imgUsers.keys()];
+  const decode = async (ii) => {
+    const im = J.images[ii];
+    let blob;
+    if (im.bufferView !== undefined) blob = new Blob([bvData(im.bufferView)], { type: im.mimeType || 'image/png' });
+    else if (im.uri && im.uri.startsWith('data:')) blob = await (await fetch(im.uri)).blob();
+    else return null;
+    let bmp = await createImageBitmap(blob, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+    if (Math.max(bmp.width, bmp.height) > cap) {
+      const k = cap / Math.max(bmp.width, bmp.height);
+      const small = await createImageBitmap(bmp, { resizeWidth: Math.max(1, Math.round(bmp.width * k)), resizeHeight: Math.max(1, Math.round(bmp.height * k)), resizeQuality: 'high', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+      bmp.close(); bmp = small;
     }
-  }
-  function annulus(c, nrm, r0, r1, a0, a1, mat, grp, fn) {
-    const e1 = vnorm(vcross(nrm, Math.abs(nrm[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), e2 = vcross(nrm, e1);
-    for (let r = Math.max(r0, DS * 0.3); r <= r1 + 1e-6; r += DS * 0.9) {
-      const nc = Math.max(6, Math.round((a1 - a0) * r / DS));
-      for (let j = 0; j < nc; j++) {
-        const ang = a0 + (j + rnd() * 0.6) / nc * (a1 - a0);
-        const p = vadd(c, vadd(vmul(e1, Math.cos(ang) * r), vmul(e2, Math.sin(ang) * r)));
-        const m = fn ? fn(r, ang, p) : mat;
-        if (m) add(p, nrm, m, grp);
+    return bmp;
+  };
+  const shared = new Map(); // one GL texture per image + colour space + sampler
+  const upload = (ii, bmp) => {
+    for (const [ti, need2] of imgUsers.get(ii)) {
+      const smp = (J.samplers && J.samplers[J.textures[ti].sampler]) || {};
+      for (const srgb of [true, false]) {
+        if (srgb ? !need2.srgb : !need2.lin) continue;
+        const sk = ii + ':' + srgb + ':' + J.textures[ti].sampler;
+        if (shared.has(sk)) { texGL.set(ti + ':' + (srgb ? 1 : 0), shared.get(sk)); continue; }
+        const tex = gl.createTexture();
+        shared.set(sk, tex);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, srgb ? gl.SRGB8_ALPHA8 : gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+        const minF = smp.minFilter || gl.LINEAR_MIPMAP_LINEAR;
+        const mip = minF === gl.LINEAR_MIPMAP_LINEAR || minF === gl.NEAREST_MIPMAP_LINEAR || minF === gl.LINEAR_MIPMAP_NEAREST || minF === gl.NEAREST_MIPMAP_NEAREST;
+        if (mip) gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minF);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, smp.magFilter || gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, smp.wrapS || gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, smp.wrapT || gl.REPEAT);
+        if (maxAniso && mip) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
+        texGL.set(ti + ':' + (srgb ? 1 : 0), tex);
+        texBytes += bmp.width * bmp.height * 4 * (mip ? 1.33 : 1);
       }
     }
-  }
-  function cylZ(cx, cy, z0, z1, r, a0, a1, inward, mat, grp, fn) {
-    const nl = Math.max(1, Math.round(Math.abs(z1 - z0) / DS)), nc = Math.max(6, Math.round((a1 - a0) * r / DS));
-    for (let i = 0; i <= nl; i++) for (let j = 0; j < nc; j++) {
-      const ang = a0 + (j + rnd() * 0.5) / nc * (a1 - a0);
-      const z = lerp(z0, z1, (i + rnd() * 0.4) / nl);
-      const d = [Math.cos(ang), Math.sin(ang), 0];
-      const p = [cx + d[0] * r, cy + d[1] * r, z];
-      const m = fn ? fn(ang, z, p) : mat;
-      if (m) add(p, inward ? vmul(d, -1) : d, m, grp);
+  };
+  const worker = async () => {
+    while (jobs.length) {
+      const ii = jobs.shift();
+      let bmp = null;
+      try { bmp = await decode(ii); } catch (e) { bmp = null; }
+      if (bmp) { upload(ii, bmp); bmp.close(); } else failed++;
+      done++;
+      if (done % 6 === 0 || !jobs.length) say(`Decoding textures… ${done} of ${imgUsers.size}`);
     }
-  }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  for (const m of mats) m.slots.forEach((ti, k) => { if (ti && ti.index !== undefined) m.tex[k] = texGL.get(ti.index + ':' + (k === 0 || k === 4 ? 1 : 0)) || null; });
 
-  const ZS = 0.93, ZG = 0.84, WF = [1.55, 0.385], WR = [-1.53, 0.385], ARCH = 0.47;
-  const inArch = (x, y) => Math.hypot(x - WF[0], y - WF[1]) < ARCH || Math.hypot(x - WR[0], y - WR[1]) < ARCH;
-  const sideTop = (x) => (x > 1.15 ? lerp(1.1, 1.0, (x - 1.15) / 1.43) : x < -0.5 ? 1.14 : 1.1);
-
-  // body sides with door shut lines and handles (trim)
-  for (const sz of [-1, 1]) {
-    const nl = Math.round(5.2 / DS);
-    for (let i = 0; i <= nl; i++) {
-      const x = -2.62 + (i + (rnd() - 0.5) * 0.5) / nl * 5.2;
-      const top = sideTop(x);
-      const nv = Math.round((top - 0.5) / DS);
-      for (let j = 0; j <= nv; j++) {
-        const y = 0.5 + (j + (rnd() - 0.5) * 0.5) / nv * (top - 0.5);
-        if (inArch(x, y)) continue;
-        let m = 'paint';
-        const shut = [1.15, 0.27, -0.45].some((sx) => Math.abs(x - sx) < 0.008) && y > 0.52;
-        if (shut) m = 'black';
-        if ((Math.abs(x - 0.47) < 0.07 || Math.abs(x + 0.18) < 0.07) && Math.abs(y - 1.0) < 0.022) m = 'trim';
-        if (x > 2.3 && y < 0.62) m = 'black';
-        if (x < -2.45 && y < 0.56) m = 'black';
-        add([x, y, sz * ZS], [0, 0, sz], m);
-      }
-    }
-    // wheel-arch flares and dark arch liners
-    for (const W of [WF, WR]) {
-      annulus([W[0], W[1], sz * (ZS + 0.012)], [0, 0, sz], ARCH, ARCH + 0.06, 0.04 * Math.PI, 0.96 * Math.PI, 'black');
-      cylZ(W[0], W[1], sz * 0.62, sz * ZS, ARCH, 0, Math.PI, true, 'under');
-    }
-    // side steps
-    rect([-0.45, 0.47, sz * ZS], [1, 0, 0], [0, 0, sz], 1.5, 0.09, [0, 1, 0], 'satin');
-    rect([-0.45, 0.42, sz * (ZS + 0.09)], [1, 0, 0], [0, 1, 0], 1.5, 0.05, [0, 0, sz], 'satin');
-    // belt ledge between the window plane and the body side
-    rect([-0.45, 1.1, sz * ZG], [1, 0, 0], [0, 0, sz], 1.6, ZS - ZG, [0, 1, 0], 'paint');
-    // side windows with B and C pillars
-    const xws = (y) => 1.15 - (y - 1.12) * (0.59 / 0.66);
-    const nw = Math.round(1.6 / DS), nh = Math.round(0.64 / DS);
-    for (let i = 0; i <= nw; i++) for (let j = 0; j <= nh; j++) {
-      const x = -0.43 + (i + rnd() * 0.5) / nw * 1.6, y = 1.12 + (j + rnd() * 0.5) / nh * 0.64;
-      if (x > xws(y)) continue;
-      let m = 'glass';
-      if (x < -0.34) m = 'paint';
-      else if (Math.abs(x - 0.24) < 0.05 || y > 1.735 || y < 1.14 || x > xws(y) - 0.03) m = 'black';
-      add([x, y, sz * ZG], [0, 0, sz], m);
-    }
-    // roof edge rounding
-    patch([0.56, 1.795, sz * 0.8], [-0.43, 1.8, sz * 0.8], [0.56, 1.76, sz * ZG], [-0.43, 1.765, sz * ZG], [0, 0.6, sz], 'paint');
-    // tub top rails
-    rect([-2.62, 1.14, sz * ZG], [1, 0, 0], [0, 0, sz], 2.12, ZS - ZG, [0, 1, 0], 'paint');
-    // tub inner walls
-    rect([-2.6, 0.76, sz * ZG], [1, 0, 0], [0, 1, 0], 2.08, 0.38, [0, 0, -sz], 'tub');
-    // mirrors
-    const mz = sz * 1.03;
-    rect([0.92, 1.18, mz - sz * 0.05], [1, 0, 0], [0, 1, 0], 0.2, 0.14, [0, 0, sz], 'trim');
-    rect([0.92, 1.32, mz - sz * 0.05], [1, 0, 0], [0, 0, sz], 0.2, 0.1, [0, 1, 0], 'paint');
-    rect([1.12, 1.18, mz - sz * 0.05], [0, 1, 0], [0, 0, sz], 0.14, 0.1, [1, 0, 0], 'paint');
-    rect([0.92, 1.18, mz - sz * 0.05], [0, 1, 0], [0, 0, sz], 0.14, 0.1, [-1, 0, 0], 'glass');
-    // edge between the front guard top and the bonnet
-    patch([1.15, 1.105, sz * 0.86], [2.52, 1.005, sz * 0.86], [1.15, 1.1, sz * ZS], [2.52, 1.0, sz * ZS], [0, 1, 0], 'paint');
-  }
-  // bonnet and nose
-  patch([1.15, 1.12, -0.86], [2.52, 1.02, -0.86], [1.15, 1.12, 0.86], [2.52, 1.02, 0.86], [0.1, 1, 0], 'paint');
-  patch([2.52, 1.02, -0.88], [2.63, 0.96, -0.88], [2.52, 1.02, 0.88], [2.63, 0.96, 0.88], [1, 1, 0], 'paint');
-  patch([2.63, 0.96, -0.9], [2.68, 0.86, -0.9], [2.63, 0.96, 0.9], [2.68, 0.86, 0.9], [1, 0.4, 0], 'paint');
-  // front face: grille, headlights, fog lights, bumper
-  rect([2.68, 0.34, -0.92], [0, 0, 1], [0, 1, 0], 1.84, 0.53, [1, 0, 0], null, 0, (p) => {
-    const az = Math.abs(p[2]), y = p[1];
-    if (az > 0.56 && y > 0.73) return az > 0.84 ? 'amber' : 'light';
-    if (az < 0.54 && y > 0.56 && y < 0.85) {
-      if (az > 0.5 || y < 0.6 || y > 0.81) return 'trim';
-      return (Math.floor(y / 0.035) % 2 === 0) ? 'grille' : 'satin';
-    }
-    if (y < 0.55) { if (az > 0.6 && az < 0.76 && y > 0.43 && y < 0.5) return 'light'; return 'black'; }
-    return 'paint';
+  /* material uniform buffer */
+  const align = gl.getParameter(gl.UNIFORM_BUFFER_OFFSET_ALIGNMENT) || 256;
+  const stride = Math.ceil((MAT_VEC4S * 16) / align) * align;
+  const ubuf = new Float32Array((stride / 4) * mats.length);
+  mats.forEach((m, i) => {
+    const o = (i * stride) / 4;
+    ubuf.set(m.base, o);
+    ubuf.set([...m.emis, m.cutoff], o + 4);
+    ubuf.set([m.metal, m.rough, m.normScale, m.occStrength], o + 8);
+    ubuf.set([m.coat, m.coatRough, m.f0, m.mode], o + 12);
+    ubuf.set(m.tex.slice(0, 4).map((t) => (t ? 1 : 0)), o + 16);
+    ubuf.set([m.tex[4] ? 1 : 0, m.doubleSided ? 1 : 0, m.unlit ? 1 : 0, 0], o + 20);
+    m.slots.forEach((ti, k) => ubuf.set(texTransformRows(ti), o + 24 + k * 8));
   });
-  rect([2.5, 0.34, -0.9], [1, 0, 0], [0, 0, 1], 0.18, 1.8, [0, -1, 0], 'under');
-  // windscreen with A-pillars and cowl
-  patch([1.15, 1.12, -0.82], [0.56, 1.78, -0.8], [1.15, 1.12, 0.82], [0.56, 1.78, 0.8], [1, 0.9, 0], null, 0, (p) => {
-    const az = Math.abs(p[2]);
-    if (az > 0.73) return 'paint';
-    if (p[1] < 1.15) return 'black';
-    return 'glass';
-  });
-  // roof
-  patch([0.56, 1.795, -0.8], [-0.43, 1.8, -0.8], [0.56, 1.795, 0.8], [-0.43, 1.8, 0.8], [0, 1, 0], 'paint');
-  // cab back wall with rear window
-  rect([-0.45, 1.1, -0.84], [0, 0, 1], [0, 1, 0], 1.68, 0.7, [-1, 0, 0], null, 0, (p) => (Math.abs(p[2]) < 0.55 && p[1] > 1.3 && p[1] < 1.72 ? 'glass' : 'paint'));
-  // tub floor (ribbed), front wall, tailgate
-  rect([-2.6, 0.76, -0.84], [1, 0, 0], [0, 0, 1], 2.08, 1.68, [0, 1, 0], null, 0, (p) => (Math.floor((p[2] + 1) / 0.12) % 2 ? 'tub' : 'satin'));
-  rect([-0.5, 0.76, -0.84], [0, 0, 1], [0, 1, 0], 1.68, 0.38, [-1, 0, 0], 'tub');
-  rect([-2.62, 0.5, -0.93], [0, 0, 1], [0, 1, 0], 1.86, 0.64, [-1, 0, 0], null, 0, (p) => {
-    const az = Math.abs(p[2]);
-    if (az > 0.79 && p[1] > 0.72 && p[1] < 1.08) return p[1] > 0.98 ? 'amber' : 'tail';
-    if (az < 0.16 && Math.abs(p[1] - 1.03) < 0.025) return 'trim';
-    return 'paint';
-  });
-  rect([-2.6, 0.76, -0.84], [0, 0, 1], [0, 1, 0], 1.68, 0.38, [1, 0, 0], 'tub');
-  rect([-2.62, 1.14, -0.93], [1, 0, 0], [0, 0, 1], 0.04, 1.86, [0, 1, 0], 'paint');
-  // rear step bumper (trim) and underbody
-  rect([-2.72, 0.38, -0.9], [0, 0, 1], [0, 1, 0], 1.8, 0.15, [-1, 0, 0], 'trim');
-  rect([-2.72, 0.53, -0.9], [1, 0, 0], [0, 0, 1], 0.1, 1.8, [0, 1, 0], 'trim');
-  for (let x = -2.6; x < 2.5; x += DS * 2) for (let z = -0.88; z <= 0.88; z += DS * 2) add([x, 0.46, z], [0, -1, 0], 'under');
+  const ubo = gl.createBuffer();
+  gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
+  gl.bufferData(gl.UNIFORM_BUFFER, ubuf, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
-  // wheels
-  for (const W of [WF, WR]) for (const sz of [-1, 1]) {
-    const zc = sz * 0.775, zo = zc + sz * 0.13, zi = zc - sz * 0.13;
-    cylZ(W[0], W[1], zi, zo, 0.385, 0, TAU, false, 'rubber', G.ROAD, (ang) => (Math.floor(ang / TAU * 90) % 3 === 0 ? 'satin' : 'rubber'));
-    cylZ(W[0], W[1], zi, zo, 0.398, 0, TAU, false, 'rubber', G.AT, (ang, z) => {
-      const block = (Math.floor(ang / TAU * 44) + (Math.abs(z - zc) > 0.05 ? 1 : 0)) % 2 === 0;
-      return block ? 'rubber' : 'under';
-    });
-    annulus([W[0], W[1], zo], [0, 0, sz], 0.255, 0.39, 0, TAU, 'rubber', 0, (r) => (r > 0.33 && r < 0.345 ? 'satin' : 'rubber'));
-    annulus([W[0], W[1], zi], [0, 0, -sz], 0.255, 0.39, 0, TAU, 'under');
-    annulus([W[0], W[1], zc + sz * 0.02], [0, 0, sz], 0.05, 0.2, 0, TAU, 'brake');
-    annulus([W[0], W[1], zo - sz * 0.012], [0, 0, sz], 0.02, 0.255, 0, TAU, 'alloy', G.ALLOY, (r, ang) => {
-      if (r > 0.225) return 'alloy';
-      if (r < 0.055) return 'satin';
-      const k = ((ang / TAU) * 6) % 1;
-      return Math.abs(k - 0.5) < 0.12 + 0.05 * (r / 0.22) ? 'alloy' : null;
-    });
-    annulus([W[0], W[1], zo - sz * 0.01], [0, 0, sz], 0.02, 0.255, 0, TAU, 'steel', G.STEEL, (r, ang, p) => {
-      if (r < 0.06) return 'chrome';
-      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; if (Math.hypot(p[0] - (W[0] + Math.cos(a) * 0.16), p[1] - (W[1] + Math.sin(a) * 0.16)) < 0.035) return null; }
-      return 'steel';
-    });
-  }
-
-  // ---- accessories ----
-  // bull bar
-  const bb = (a, b) => tube(a, b, 0.032, 'satin', G.BULLBAR);
-  bb([2.86, 0.48, -0.9], [2.86, 0.48, 0.9]);
-  bb([2.88, 0.98, -0.42], [2.88, 0.98, 0.42]);
-  for (const s of [-1, 1]) { bb([2.86, 0.46, s * 0.42], [2.88, 1.0, s * 0.42]); bb([2.86, 0.48, s * 0.9], [2.74, 0.88, s * 0.94]); bb([2.86, 0.6, s * 0.42], [2.86, 0.6, s * 0.9]); bb([2.86, 0.55, s * 0.55], [2.68, 0.55, s * 0.55]); }
-  rect([2.87, 0.34, -0.88], [0, 0, 1], [0, 1, 0], 1.76, 0.14, [1, 0, 0], 'satin', G.BULLBAR);
-  // LED light bar on the roof's front edge
-  rect([0.4, 1.83, -0.62], [0, 0, 1], [0, 1, 0], 1.24, 0.09, [1, 0, 0], null, G.LIGHTBAR, (p) => (Math.abs(p[1] - 1.875) < 0.022 && Math.floor((p[2] + 1) / 0.035) % 2 === 0 ? 'led' : 'black'));
-  rect([0.32, 1.92, -0.62], [1, 0, 0], [0, 0, 1], 0.08, 1.24, [0, 1, 0], 'black', G.LIGHTBAR);
-  // roof racks
-  for (const x of [0.32, -0.05, -0.38]) tube([x, 1.9, -0.8], [x, 1.9, 0.8], 0.018, 'black', G.RACKS);
-  for (const s of [-1, 1]) { tube([-0.42, 1.92, s * 0.8], [0.4, 1.92, s * 0.8], 0.016, 'black', G.RACKS); for (const x of [0.32, -0.38]) tube([x, 1.8, s * 0.8], [x, 1.92, s * 0.8], 0.02, 'black', G.RACKS); }
-  // snorkel up the left A-pillar
-  tube([1.72, 0.98, -0.96], [1.2, 1.1, -0.97], 0.045, 'satin', G.SNORKEL);
-  tube([1.2, 1.1, -0.97], [0.98, 1.62, -0.9], 0.045, 'satin', G.SNORKEL);
-  tube([0.98, 1.62, -0.9], [0.9, 1.86, -0.88], 0.045, 'satin', G.SNORKEL);
-  tube([0.86, 1.88, -0.88], [1.05, 1.9, -0.88], 0.065, 'satin', G.SNORKEL);
-  // roller tub cover
-  rect([-2.6, 1.16, -0.84], [1, 0, 0], [0, 0, 1], 2.0, 1.68, [0, 1, 0], null, G.COVER, (p) => (Math.floor(p[0] / 0.05) % 2 ? 'black' : 'satin'));
-  cylZ(-0.56, 1.2, -0.84, 0.84, 0.07, 0, TAU, false, 'satin', G.COVER);
-  // tow bar
-  tube([-2.6, 0.42, 0], [-2.96, 0.42, 0], 0.035, 'satin', G.TOWBAR);
-  for (let i = 0; i < 160; i++) { const d = vnorm([rnd() - 0.5, rnd() - 0.5, rnd() - 0.5]); add(vadd([-2.99, 0.5, 0], vmul(d, 0.04)), d, 'chrome', G.TOWBAR); }
-
-  const n = out.length / 15;
-  const S = makeSplatSet(n, 'Demo ute');
-  for (let i = 0; i < n; i++) {
-    const o = i * 15;
-    setSplat(S, i, out[o], out[o + 1], out[o + 2], out[o + 3], out[o + 4], out[o + 5], out[o + 6], out[o + 7], out[o + 8], out[o + 9], out[o + 10], out[o + 11], out[o + 12], out[o + 13], out[o + 14]);
-  }
-  S.groups = true;
-  S.isDemo = true;
-  return S;
+  const variantNames = ((J.extensions && J.extensions.KHR_materials_variants && J.extensions.KHR_materials_variants.variants) || []).map((v) => v.name || '');
+  const asset = {
+    name, nodes, meshes, mats, roots, byName, variantNames, variant: -1, ubo, stride, glBufs, texGL,
+    tris: Math.round(tris), texMB: texBytes / 1048576, failedImages: failed,
+    draws: [], opaque: [], blend: [], dirty: true, wmKey: '', bounds: null,
+  };
+  rebuildGLB(asset);
+  return asset;
 }
 
-/* ---------------- configurator data (fictional vehicle and pricing) ---------------- */
-const CFG = {
-  model: 'Corella DC',
-  paints: [
-    { id: 'white', name: 'Glacier White', rgb: [0.86, 0.87, 0.86], price: 0 },
-    { id: 'graphite', name: 'Graphite', rgb: [0.27, 0.285, 0.3], price: 750 },
-    { id: 'red', name: 'Outback Red', rgb: [0.56, 0.11, 0.07], price: 750 },
-    { id: 'black', name: 'Eclipse Black', rgb: [0.05, 0.05, 0.055], price: 750 },
-    { id: 'blue', name: 'Saltwater Blue', rgb: [0.12, 0.28, 0.47], price: 750 },
-    { id: 'sand', name: 'Sandstorm', rgb: [0.66, 0.56, 0.39], price: 750 },
-  ],
-  grades: [
-    { id: 'trade', name: 'Trade', base: 49990, note: 'Black trim, vinyl floor, 8" screen', trim: [0.07, 0.07, 0.075], spec: 0.25 },
-    { id: 'touring', name: 'Touring', base: 58490, note: 'Satin trim, cloth seats, 12" screen', trim: [0.3, 0.31, 0.32], spec: 0.7 },
-    { id: 'summit', name: 'Summit', base: 66990, note: 'Chrome trim, leather, 360° camera', trim: [0.72, 0.74, 0.76], spec: 1.6 },
-  ],
-  wheels: [
-    { id: 'steel17', name: '17" steel', short: '17" steel', price: 0 },
-    { id: 'alloy18', name: '18" alloy', short: '18" alloy', price: 1200 },
-    { id: 'at18', name: '18" alloy, all-terrain tyres', short: '18" A/T', price: 1950 },
-  ],
-  extras: [
-    { id: 'bullbar', name: 'Bull bar', price: 3450, group: G.BULLBAR },
-    { id: 'lightbar', name: 'LED light bar', price: 1190, group: G.LIGHTBAR },
-    { id: 'racks', name: 'Roof racks', price: 890, group: G.RACKS },
-    { id: 'snorkel', name: 'Snorkel', price: 780, group: G.SNORKEL },
-    { id: 'cover', name: 'Roller tub cover', price: 2650, group: G.COVER },
-    { id: 'towbar', name: 'Tow bar', price: 1150, group: G.TOWBAR },
-  ],
+function freeGLB(a) {
+  if (!a) return;
+  for (const b of a.glBufs.values()) gl.deleteBuffer(b);
+  for (const t of new Set(a.texGL.values())) gl.deleteTexture(t);
+  for (const list of a.meshes) for (const p of list) gl.deleteVertexArray(p.vao);
+  gl.deleteBuffer(a.ubo);
+}
+
+function setGLBVariant(a, vi) {
+  a.variant = vi;
+  for (const list of a.meshes) for (const p of list) p.mat = vi >= 0 && p.variants.has(vi) ? p.variants.get(vi) : p.mat0;
+  a.dirty = true;
+}
+function setGLBNodeVisible(a, name, vis) {
+  const ids = a.byName.get(name);
+  if (!ids) return false;
+  for (const i of ids) if (a.nodes[i].visible !== vis) { a.nodes[i].visible = vis; a.dirty = true; }
+  return true;
+}
+function findGLBMaterial(a, name) {
+  if (!a) return null;
+  const strip = (s) => s.replace(/(\.\d+)+$/, '').replace(/SG$/, '');
+  return a.mats.find((m) => m.name === name) || a.mats.find((m) => strip(m.name) === name) || null;
+}
+
+// collect draw items for visible nodes; opaque sorted by material so state changes are rare
+function rebuildGLB(a) {
+  a.dirty = false;
+  const draws = [];
+  const visit = (i) => {
+    const n = a.nodes[i];
+    if (!n.visible) return;
+    if (n.mesh !== undefined) for (const p of a.meshes[n.mesh]) draws.push({ p, n, mat: a.mats[p.mat], c: [0, 0, 0], d: 0 });
+    for (const c of n.children) visit(c);
+  };
+  for (const r of a.roots) visit(r);
+  a.draws = draws;
+  a.opaque = draws.filter((d) => d.mat.mode !== 2).sort((x, y) => x.mat.i - y.mat.i);
+  a.blend = draws.filter((d) => d.mat.mode === 2);
+  // bounds in the vehicle's own space
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (const d of draws) {
+    const { min, max } = d.p;
+    for (let k = 0; k < 8; k++) {
+      const q = M4.apply(d.n.world, [k & 1 ? max[0] : min[0], k & 2 ? max[1] : min[1], k & 4 ? max[2] : min[2]]);
+      for (let j = 0; j < 3; j++) { lo[j] = Math.min(lo[j], q[j]); hi[j] = Math.max(hi[j], q[j]); }
+    }
+    d.lc = M4.apply(d.n.world, [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2]);
+  }
+  a.bounds = draws.length ? { min: lo, max: hi } : { min: [-1, 0, -2], max: [1, 1.5, 2] };
+  a.wmKey = '';
+}
+
+// per frame: node matrices in stage space (vehicle placement × node), and back-to-front order for glass
+function prepareGLB(a, vehM, camStage) {
+  if (a.dirty) rebuildGLB(a);
+  const key = Array.from(vehM).join(',');
+  if (key !== a.wmKey) {
+    a.wmKey = key;
+    for (const n of a.nodes) if (n.world) n.wm = M4.mul(vehM, n.world);
+    for (const d of a.draws) d.c = M4.apply(vehM, d.lc);
+  }
+  for (const d of a.blend) { const dx = d.c[0] - camStage[0], dy = d.c[1] - camStage[1], dz = d.c[2] - camStage[2]; d.d = dx * dx + dy * dy + dz * dz; }
+  a.blend.sort((x, y) => y.d - x.d);
+}
+
+let whiteTex = null, flatNormTex = null;
+function drawGLB(a, list, proj, viewStage, camStage, light) {
+  if (!list.length) return;
+  const u = R.pbr.u;
+  gl.useProgram(R.pbr.p);
+  gl.uniformMatrix4fv(u.uProj, false, proj);
+  gl.uniformMatrix4fv(u.uView, false, viewStage);
+  gl.uniform3fv(u.uCam, camStage);
+  gl.uniform3fv(u.uSkyTop, light.top); gl.uniform3fv(u.uSkyHor, light.hor); gl.uniform3fv(u.uGround, light.ground);
+  gl.uniform1f(u.uExposure, light.exposure);
+  for (let k = 0; k < 5; k++) gl.uniform1i(u['t' + k], k);
+  gl.vertexAttrib4f(4, 1, 1, 1, 1);
+  let cur = null, curFlip = null, curCull = null, curN = null;
+  for (const d of list) {
+    const m = d.mat;
+    if (m !== cur) {
+      cur = m;
+      gl.bindBufferRange(gl.UNIFORM_BUFFER, 0, a.ubo, m.i * a.stride, MAT_VEC4S * 16);
+      for (let k = 0; k < 5; k++) { gl.activeTexture(gl.TEXTURE0 + k); gl.bindTexture(gl.TEXTURE_2D, m.tex[k] || (k === 2 ? flatNormTex : whiteTex)); }
+      const cull = !m.doubleSided;
+      if (cull !== curCull) { curCull = cull; if (cull) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE); }
+    }
+    if (d.n.flip !== curFlip) { curFlip = d.n.flip; gl.frontFace(curFlip ? gl.CW : gl.CCW); }
+    if (d.p.hasNormal !== curN) { curN = d.p.hasNormal; gl.uniform1i(u.uHasN, curN ? 1 : 0); }
+    gl.uniformMatrix4fv(u.uModel, false, d.n.wm);
+    gl.bindVertexArray(d.p.vao);
+    if (d.p.idxType) gl.drawElements(d.p.mode, d.p.count, d.p.idxType, d.p.idxOff);
+    else gl.drawArrays(d.p.mode, 0, d.p.count);
+  }
+  gl.disable(gl.CULL_FACE); gl.frontFace(gl.CCW);
+  gl.activeTexture(gl.TEXTURE0);
+}
+
+/* ---------------- configuration XML ----------------
+   Reads option trees like:
+     <Option type="car"> <Option name="grade"> <Option name="ZR" selected="true"/> … </Option> … </Option>
+   Rules understood:
+     dependent="a, b c"   available when (a) OR (b AND c) is selected
+     noavail="a, b"       unavailable while a or b is selected
+     groups / multi-select-groups / toggle-select-groups / null-select-groups   sub-groups inside one option group
+     is-none="true"       the "nothing chosen" option of its sub-groups
+     <State>              1st: assets shown while selected, 2nd: assets hidden while selected (node names)
+   Hidden groups (hidden="true", e.g. a model code) are resolved automatically and shown as a summary. */
+const splitList = (s) => (s || '').split(',').map((x) => x.trim()).filter(Boolean);
+const prettify = (s) => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
+
+function parseConfigXML(text, fileName) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('The XML couldn’t be read. Check that the file is complete.');
+  const kids = (el, tag) => [...el.children].filter((c) => c.tagName === tag);
+  const all = [...doc.getElementsByTagName('Option')];
+  let car = all.find((o) => o.getAttribute('type') === 'car');
+  if (!car) car = all.find((o) => kids(o, 'Option').some((g) => kids(g, 'Option').length));
+  if (!car) throw new Error('No option groups were found in this XML.');
+  const pipe = doc.querySelector('Pipeline');
+  const cfg = {
+    file: fileName || '', id: car.getAttribute('name') || '',
+    name: (pipe && pipe.getAttribute('asset-name')) || car.getAttribute('title') || car.getAttribute('name') || 'Vehicle',
+    groups: [], byName: new Map(),
+  };
+  for (const g of kids(car, 'Option')) {
+    if (!kids(g, 'Option').length) continue;
+    const name = g.getAttribute('name') || 'group';
+    const grp = {
+      name, title: g.getAttribute('title') || prettify(name), hidden: g.getAttribute('hidden') === 'true',
+      multi: new Set(splitList(g.getAttribute('multi-select-groups'))),
+      toggle: new Set(splitList(g.getAttribute('toggle-select-groups'))),
+      nullable: new Set(splitList(g.getAttribute('null-select-groups'))),
+      switches: splitList(g.getAttribute('switch-material-names')),
+      options: [], subs: [], kind: 'single', isColour: false,
+    };
+    for (const o of kids(g, 'Option')) {
+      const dep = splitList(o.getAttribute('dependent')).map((t) => t.split(/\s+/).filter(Boolean));
+      const opt = {
+        name: o.getAttribute('name') || '', title: o.getAttribute('title') || o.getAttribute('code') || o.getAttribute('name') || '', def: o.getAttribute('selected') === 'true',
+        dep: dep.length ? dep : null, noavail: splitList(o.getAttribute('noavail')), subs: splitList(o.getAttribute('groups')),
+        isNone: o.getAttribute('is-none') === 'true', colour: o.getAttribute('colour') || '', group: grp,
+        states: kids(o, 'State').map((s) => kids(s, 'Asset').map((a) => ({ name: a.getAttribute('name') || '', sw: a.getAttribute('switch-material-name') || '' }))),
+      };
+      if (!opt.subs.length) opt.subs = ['_'];
+      grp.options.push(opt);
+      if (!cfg.byName.has(opt.name)) cfg.byName.set(opt.name, opt);
+    }
+    grp.subs = [...new Set(grp.options.flatMap((o) => o.subs))];
+    grp.kind = grp.multi.size || grp.toggle.size || grp.nullable.size ? 'set' : 'single';
+    grp.isColour = /colou?r|paint/i.test(name + ' ' + grp.title) || grp.switches.some((s) => /paint/i.test(s));
+    cfg.groups.push(grp);
+  }
+  if (!cfg.groups.length) throw new Error('No option groups were found in this XML.');
+  return cfg;
+}
+
+const subExclusive = (g, s) => !g.multi.has(s);
+const subRequired = (g, s) => g.kind === 'single' || (!g.nullable.has(s) && !g.multi.has(s));
+
+function cfgNames(cfg, sel) {
+  const names = new Set();
+  for (const g of cfg.groups) {
+    const cur = sel.get(g.name);
+    for (const n of cur) names.add(n);
+    if (g.kind === 'set') for (const o of g.options) {
+      if (!o.isNone) continue;
+      const any = g.options.some((x) => !x.isNone && cur.has(x.name) && x.subs.some((s) => o.subs.includes(s)));
+      if (!any) names.add(o.name);
+    }
+  }
+  return names;
+}
+function cfgAvailable(opt, names) {
+  if (opt.dep && !opt.dep.some((and) => and.every((n) => names.has(n)))) return false;
+  return !opt.noavail.some((n) => names.has(n));
+}
+function cfgDefaults(cfg) {
+  const sel = new Map();
+  for (const g of cfg.groups) {
+    const s = new Set();
+    if (g.kind === 'single') { const d = g.options.find((o) => o.def) || g.options[0]; if (d) s.add(d.name); }
+    else for (const o of g.options) if (o.def && !o.isNone) s.add(o.name);
+    sel.set(g.name, s);
+  }
+  return cfgResolve(cfg, sel);
+}
+// make the selection consistent: drop unavailable choices, fill required ones (repeats until stable)
+function cfgResolve(cfg, sel) {
+  for (let pass = 0; pass < 8; pass++) {
+    let changed = false;
+    for (const g of cfg.groups) {
+      const cur = sel.get(g.name);
+      let names = cfgNames(cfg, sel);
+      for (const n of [...cur]) {
+        const o = g.options.find((x) => x.name === n);
+        if (!o || !cfgAvailable(o, names)) { cur.delete(n); changed = true; names = cfgNames(cfg, sel); }
+      }
+      for (const s of g.subs) {
+        const opts = g.options.filter((o) => !o.isNone && o.subs.includes(s));
+        if (!opts.length) continue;
+        const chosen = opts.filter((o) => cur.has(o.name));
+        if (subExclusive(g, s) && chosen.length > 1) { for (const o of chosen.slice(0, -1)) cur.delete(o.name); changed = true; }
+        if (subRequired(g, s) && !chosen.length) {
+          const avail = opts.filter((o) => cfgAvailable(o, names));
+          const pick = avail.find((o) => o.def) || avail[0];
+          if (pick) { cur.add(pick.name); changed = true; names = cfgNames(cfg, sel); }
+        }
+      }
+    }
+    if (!changed) break;
+  }
+  return sel;
+}
+// user picks an option: single groups switch, set groups toggle (respecting exclusive sub-groups)
+function cfgChoose(cfg, sel, groupName, optName) {
+  const g = cfg.groups.find((x) => x.name === groupName);
+  if (!g) return sel;
+  const o = g.options.find((x) => x.name === optName);
+  if (!o) return sel;
+  const cur = sel.get(g.name);
+  if (g.kind === 'single') { cur.clear(); cur.add(o.name); }
+  else if (o.isNone) { for (const x of g.options) if (x.subs.some((s) => o.subs.includes(s))) cur.delete(x.name); }
+  else if (cur.has(o.name)) { if (!o.subs.every((s) => subRequired(g, s))) cur.delete(o.name); }
+  else {
+    for (const s of o.subs) if (subExclusive(g, s)) for (const x of g.options) if (x !== o && x.subs.includes(s)) cur.delete(x.name);
+    cur.add(o.name);
+  }
+  return cfgResolve(cfg, sel);
+}
+// how a group is shown: 'swatch' | 'choice' | 'toggle' | 'info' | 'none'
+function cfgDisplay(g, names, glb) {
+  if (g.hidden) return 'none';
+  const avail = g.options.filter((o) => !o.isNone && cfgAvailable(o, names));
+  const userPick = g.kind === 'set' && g.subs.some((s) => !subRequired(g, s));
+  if (userPick) return 'toggle';
+  if (avail.length <= 1) return 'info';
+  return g.isColour && g.options.some((o) => o.colour || (glb && cfgSwatch(o, glb).length && cfgSwatch(o, glb)[0] !== '#8a8780')) ? 'swatch' : 'choice';
+}
+// node visibility from <State> assets (names without a switch-material-name are scene nodes)
+function cfgNodeVisibility(cfg, sel) {
+  const names = cfgNames(cfg, sel), show = new Set(), hide = new Set(), shownSomewhere = new Set(), all = new Set();
+  for (const g of cfg.groups) for (const o of g.options) {
+    const on = names.has(o.name);
+    o.states.forEach((st, k) => {
+      for (const a of st) {
+        if (a.sw || !a.name) continue;
+        all.add(a.name);
+        if (k === 0) shownSomewhere.add(a.name);
+        if (on && k === 0) show.add(a.name);
+        if (on && k === 1) hide.add(a.name);
+      }
+    });
+  }
+  const vis = new Map();
+  for (const n of all) vis.set(n, show.has(n) ? true : hide.has(n) ? false : !shownSomewhere.has(n));
+  return vis;
+}
+// pick the material variant whose name tokens (split on "_") are all selected option names
+function cfgVariant(variantNames, names) {
+  let best = -1, bestN = 0;
+  variantNames.forEach((v, i) => {
+    const t = v.split('_').filter(Boolean);
+    if (t.length && t.every((x) => names.has(x)) && t.length > bestN) { best = i; bestN = t.length; }
+  });
+  return best;
+}
+// paint swatch colours (sRGB hex) from the vehicle's materials, falling back to the XML's colour attribute
+const lin2srgb = (c) => (c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+function cfgSwatch(opt, glb) {
+  const cols = [];
+  const hex = (rgb) => '#' + rgb.slice(0, 3).map((c) => Math.round(clamp(lin2srgb(c), 0, 1) * 255).toString(16).padStart(2, '0')).join('');
+  for (const a of opt.states[0] || []) {
+    if (!a.sw) continue;
+    const m = findGLBMaterial(glb, `${a.name}_${opt.name}`) || findGLBMaterial(glb, a.name + opt.name);
+    if (m) { const h = hex(m.base); if (!cols.includes(h)) cols.push(h); }
+  }
+  if (!cols.length && opt.colour) cols.push(opt.colour);
+  if (!cols.length) cols.push('#8a8780');
+  return cols;
+}
+
+/* ---------------- scene: environment splat + vehicle GLB + configuration XML ----------------
+   Stage space is the shared space everything is aligned in (metres, Y up, vehicle normally at the origin).
+   environment → stage:  T(pos) · Ry(yaw) · S(scale) · T(offset) · orientation · format conversion
+   vehicle     → stage:  T(pos) · Ry(yaw) · S(scale)
+   stage       → room:   T(pos) · Ry(yaw) · S(scale)   (only used in the glasses; identity on screen) */
+const scene = {
+  env: { set: null, name: '', rot: M4.ident(), offset: [0, 0, 0], pos: [0, 0, 0], yaw: 0, scale: 1, crop: 0, across: 1, mean: [0.45, 0.45, 0.47] },
+  veh: { glb: null, name: '', pos: [0, 0, 0], yaw: 0, scale: 1 },
+  cfg: null, sel: null,
+  fallback: { variant: -1, acc: new Set(), accNodes: [] },
 };
-const state = { paint: 'blue', grade: 'touring', wheels: 'alloy18', extras: new Set(['racks']), turntable: !matchMedia('(prefers-reduced-motion: reduce)').matches, life: true };
-const byId = (list, id) => list.find((x) => x.id === id);
-const money = (v) => '$' + Math.round(v).toLocaleString('en-AU');
-function price() {
-  let p = byId(CFG.grades, state.grade).base + byId(CFG.paints, state.paint).price + byId(CFG.wheels, state.wheels).price;
-  for (const e of CFG.extras) if (state.extras.has(e.id)) p += e.price;
-  return p;
-}
-function hiddenMask() {
-  let m = 0;
-  for (const e of CFG.extras) if (!state.extras.has(e.id)) m |= 1 << e.group;
-  if (state.wheels === 'steel17') m |= (1 << G.ALLOY) | (1 << G.AT);
-  else if (state.wheels === 'alloy18') m |= (1 << G.STEEL) | (1 << G.AT);
-  else m |= (1 << G.STEEL) | (1 << G.ROAD);
-  return m;
-}
-
-/* ---------------- model placement ---------------- */
-const model = { set: null, rot: M4.ident(), offset: [0, 0, 0], fit: 1, userScale: 1, len: 5.4, height: 1.9, crop: 0, floorCut: -1e9 };
 const stage = { pos: [0, 0, 0], yaw: 0, scale: 1 };
+const opts = { grid: true, shadow: true, exposure: 1, life: true, target: 'veh', xrTarget: 'all', fine: false, step: 0.05 };
+const SCALE_MIN = 1e-5, SCALE_MAX = 1e5;
+
+function trsMatrix(o) { return M4.mul(M4.mul(M4.trans(o.pos[0], o.pos[1], o.pos[2]), M4.rotY(o.yaw)), M4.scale(o.scale)); }
+function envMatrix() {
+  const e = scene.env;
+  return M4.mul(M4.mul(trsMatrix(e), M4.trans(e.offset[0], e.offset[1], e.offset[2])), M4.mul(e.rot, e.set.conv));
+}
+function vehMatrix() { return trsMatrix(scene.veh); }
+function stageMatrix() { return trsMatrix(stage); }
 function percentile(arr, p) { return arr[Math.min(arr.length - 1, Math.max(0, Math.floor(p * (arr.length - 1))))]; }
-function computeFit(autoFit) {
-  const S = model.set, R = M4.mul(model.rot, S.conv);
+// centre the environment: middle of its footprint on the origin, its low ground at y = 0 (before scaling)
+function centreEnv() {
+  const e = scene.env, S = e.set, Rm = M4.mul(e.rot, S.conv);
   const step = Math.max(1, Math.floor(S.n / 80000));
   const xs = [], ys = [], zs = [];
-  for (let i = 0; i < S.n; i += step) { const p = M4.apply(R, [S.pos[i * 3], S.pos[i * 3 + 1], S.pos[i * 3 + 2]]); xs.push(p[0]); ys.push(p[1]); zs.push(p[2]); }
-  const num = (a, b) => a - b;
+  let r = 0, g = 0, b = 0, w = 0;
+  for (let i = 0; i < S.n; i += step) {
+    const p = M4.apply(Rm, [S.pos[i * 3], S.pos[i * 3 + 1], S.pos[i * 3 + 2]]);
+    xs.push(p[0]); ys.push(p[1]); zs.push(p[2]);
+    const c = S.tex[i * 8 + 3], a = (c >>> 24) / 255;
+    r += (c & 255) * a; g += ((c >>> 8) & 255) * a; b += ((c >>> 16) & 255) * a; w += a * 255;
+  }
+  const num = (p, q) => p - q;
   xs.sort(num); ys.sort(num); zs.sort(num);
-  const lo = S.isDemo ? 0 : 0.03, hi = S.isDemo ? 1 : 0.97;
-  const x0 = percentile(xs, lo), x1 = percentile(xs, hi), z0 = percentile(zs, lo), z1 = percentile(zs, hi), y0 = percentile(ys, S.isDemo ? 0 : 0.01), y1 = percentile(ys, S.isDemo ? 1 : 0.99);
-  model.offset = [-(x0 + x1) / 2, -y0, -(z0 + z1) / 2];
-  const len = Math.max(x1 - x0, z1 - z0, 1e-3);
-  if (autoFit) model.fit = len < 0.3 || len > 60 ? 5.3 / len : 1;
-  model.rawLen = len; model.rawHeight = y1 - y0;
-  updateDims();
+  const x0 = percentile(xs, 0.03), x1 = percentile(xs, 0.97), z0 = percentile(zs, 0.03), z1 = percentile(zs, 0.97);
+  e.offset = [-(x0 + x1) / 2, -percentile(ys, 0.02), -(z0 + z1) / 2];
+  e.across = Math.max(x1 - x0, z1 - z0, 1e-6);
+  if (w > 0) e.mean = [r / w, g / w, b / w];
 }
-function updateDims() { const k = model.fit * model.userScale; model.len = model.rawLen * k; model.height = model.rawHeight * k; }
-function fitMatrix() {
-  const k = model.fit * model.userScale;
-  return M4.mul(M4.mul(M4.scale(k), M4.trans(model.offset[0], model.offset[1], model.offset[2])), M4.mul(model.rot, model.set.conv));
+// vehicle box in stage space
+function vehBox() {
+  const g = scene.veh.glb;
+  if (!g) return null;
+  const M = vehMatrix(), { min, max } = g.bounds;
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (let k = 0; k < 8; k++) {
+    const q = M4.apply(M, [k & 1 ? max[0] : min[0], k & 2 ? max[1] : min[1], k & 4 ? max[2] : min[2]]);
+    for (let j = 0; j < 3; j++) { lo[j] = Math.min(lo[j], q[j]); hi[j] = Math.max(hi[j], q[j]); }
+  }
+  return { min: lo, max: hi, c: [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2], len: Math.max(hi[0] - lo[0], hi[2] - lo[2]), height: hi[1] - lo[1] };
 }
-function stageMatrix() { return M4.mul(M4.mul(M4.trans(stage.pos[0], stage.pos[1], stage.pos[2]), M4.rotY(stage.yaw)), M4.scale(stage.scale)); }
+// what the camera / glasses frame: the vehicle, else the environment, else a car-sized space at the origin
+function focusBox() {
+  const v = vehBox();
+  if (v) return v;
+  if (scene.env.set) {
+    const s = scene.env.across * scene.env.scale, p = scene.env.pos;
+    return { c: [p[0], p[1] + s * 0.08, p[2]], min: [p[0] - s / 2, p[1], p[2] - s / 2], max: [p[0] + s / 2, p[1] + s * 0.16, p[2] + s / 2], len: s, height: s * 0.16 };
+  }
+  return { c: [0, 0.75, 0], min: [-0.9, 0, -2.2], max: [0.9, 1.5, 2.2], len: 4.4, height: 1.5 };
+}
+
+/* ---------------- configuration → vehicle ---------------- */
+function applyConfig() {
+  const g = scene.veh.glb;
+  if (g && scene.cfg) {
+    const names = cfgNames(scene.cfg, scene.sel);
+    setGLBVariant(g, cfgVariant(g.variantNames, names));
+    for (const [n, v] of cfgNodeVisibility(scene.cfg, scene.sel)) setGLBNodeVisible(g, n, v);
+  } else if (g) {
+    setGLBVariant(g, scene.fallback.variant);
+    for (const n of scene.fallback.accNodes) setGLBNodeVisible(g, n, scene.fallback.acc.has(n));
+  }
+  panel.dirty = true;
+  syncBuild();
+}
+function chooseOption(group, opt) { if (!scene.cfg) return; cfgChoose(scene.cfg, scene.sel, group, opt); applyConfig(); }
+function toggleFallbackAcc(n) { const s = scene.fallback.acc; if (s.has(n)) s.delete(n); else s.add(n); applyConfig(); }
+function setFallbackVariant(i) { scene.fallback.variant = i; applyConfig(); }
+// without an XML, accessories are guessed from node names like acc_…, PZQ…, PW…
+function findAccessoryNodes(g) {
+  const pick = (n) => /^(acc_|PZQ|PW\d)/i.test(n.name) && !/Shape$/.test(n.name);
+  const out = [];
+  for (const n of g.nodes) {
+    if (!pick(n)) continue;
+    let p = n.parent, nested = false;
+    while (p >= 0) { if (pick(g.nodes[p])) { nested = true; break; } p = g.nodes[p].parent; }
+    if (!nested && !out.includes(n.name)) out.push(n.name);
+  }
+  return out;
+}
+const accLabel = (n) => prettify(n.replace(/^acc_/i, '').replace(/^(PZQ|PW)\w*?_/i, '').replace(/_\d+$/, '')).replace(/\s+/g, ' ');
+function selectedVariantName() { const g = scene.veh.glb; return g && g.variant >= 0 ? g.variantNames[g.variant] : ''; }
 
 /* ---------------- drawing ---------------- */
-let discVAO = null, panelVAO = null, lineVAO = null, lineBuf = null;
-function drawDisc(proj, view, stageM, xrMode) {
-  gl.useProgram(R.disc.p);
-  gl.uniformMatrix4fv(R.disc.u.uProj, false, proj);
-  gl.uniformMatrix4fv(R.disc.u.uView, false, M4.mul(view, stageM));
-  gl.uniform1f(R.disc.u.uRadius, Math.max(1.0, model.len * 0.64));
-  gl.uniform3fv(R.disc.u.uColor, [0.86, 0.78, 0.6]);
-  gl.uniform1f(R.disc.u.uShadow, xrMode === 'additive' ? 0 : 0.5);
-  gl.uniform1f(R.disc.u.uRing, xrMode === 'additive' ? 0.6 : 1);
-  gl.bindVertexArray(discVAO);
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+let quadVAOs = null, lineVAO = null, lineBuf = null;
+function lightRig() {
+  const m = scene.env.set ? scene.env.mean : [0.42, 0.42, 0.44];
+  return {
+    top: [0.72 * 0.75 + m[0] * 0.25, 0.74 * 0.75 + m[1] * 0.25, 0.78 * 0.75 + m[2] * 0.25],
+    hor: m.map((c) => clamp(c * 1.15 + 0.08, 0, 1.2)),
+    ground: m.map((c) => c * 0.32),
+    exposure: opts.exposure,
+  };
 }
-function drawSplats(proj, mv, vpW, vpH, fitM, maxPx) {
+function drawSplats(proj, mv, vpW, vpH, envM, maxPx) {
   if (!GPU.drawN) return;
   const u = R.splat.u;
   gl.useProgram(R.splat.p);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, GPU.tex); gl.uniform1i(u.uTex, 0);
   gl.uniformMatrix4fv(u.uProj, false, proj);
   gl.uniformMatrix4fv(u.uView, false, mv);
-  gl.uniformMatrix4fv(u.uFit, false, fitM);
+  gl.uniformMatrix4fv(u.uFit, false, envM);
   gl.uniform2f(u.uFocal, proj[0] * vpW / 2, proj[5] * vpH / 2);
   gl.uniform2f(u.uViewport, vpW, vpH);
-  const paint = byId(CFG.paints, state.paint), grade = byId(CFG.grades, state.grade);
-  gl.uniform3fv(u.uPaint, paint.rgb);
-  gl.uniform3fv(u.uTrim, grade.trim);
-  gl.uniform1f(u.uTrimSpec, grade.spec);
-  gl.uniform1i(u.uHidden, model.set && model.set.groups ? hiddenMask() : 0);
-  gl.uniform1f(u.uCrop, model.crop);
-  gl.uniform1f(u.uFloorCut, model.floorCut);
+  const fb = focusBox();
+  gl.uniform1f(u.uCrop, scene.env.crop);
+  gl.uniform2f(u.uCropC, fb.c[0], fb.c[2]);
   gl.uniform1f(u.uMaxPx, maxPx);
   gl.bindVertexArray(GPU.vao);
   gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, GPU.drawN);
 }
-function drawWorld(proj, view, vpW, vpH, opts) {
-  const stageM = stageMatrix(), fitM = fitMatrix(), modelM = M4.mul(stageM, fitM);
-  gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
-  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  drawDisc(proj, view, stageM, opts.blend);
-  drawSplats(proj, M4.mul(view, modelM), vpW, vpH, fitM, opts.maxPx);
-  if (opts.xr) { drawPanel(proj, view); drawRays(proj, view); }
+function drawShadow(proj, viewStage) {
+  const g = scene.veh.glb, { min, max } = g.bounds;
+  const m = M4.mul(vehMatrix(), M4.trans((min[0] + max[0]) / 2, min[1] + 0.004, (min[2] + max[2]) / 2));
+  const s = M4.ident(); s[0] = (max[0] - min[0]) * 0.56; s[10] = (max[2] - min[2]) * 0.54;
+  gl.useProgram(R.shadow.p);
+  gl.uniformMatrix4fv(R.shadow.u.uProj, false, proj);
+  gl.uniformMatrix4fv(R.shadow.u.uView, false, viewStage);
+  gl.uniformMatrix4fv(R.shadow.u.uModel, false, M4.mul(m, s));
+  gl.uniform1f(R.shadow.u.uStrength, 0.55);
+  gl.bindVertexArray(quadVAOs.shadow);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+function drawGrid(proj, viewStage, centre, size, alpha) {
+  gl.useProgram(R.grid.p);
+  gl.uniformMatrix4fv(R.grid.u.uProj, false, proj);
+  gl.uniformMatrix4fv(R.grid.u.uView, false, viewStage);
+  gl.uniform3fv(R.grid.u.uCentre, [centre[0], 0, centre[2]]);
+  gl.uniform1f(R.grid.u.uSize, size);
+  gl.uniform1f(R.grid.u.uStep, Math.pow(10, Math.max(0, Math.floor(Math.log10(size / 12)))));
+  gl.uniform1f(R.grid.u.uAlpha, alpha);
+  gl.bindVertexArray(quadVAOs.grid);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+// per frame, before the eyes: vehicle matrices and glass sort order
+function prepareFrame(camStage) { if (scene.veh.glb) prepareGLB(scene.veh.glb, vehMatrix(), camStage); }
+function drawWorld(proj, view, vpW, vpH, o) {
+  const viewStage = M4.mul(view, stageMatrix());
+  const g = scene.veh.glb, rig = lightRig();
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true); gl.disable(gl.BLEND);
+  if (g) drawGLB(g, g.opaque, proj, viewStage, o.camStage, rig);
+  gl.depthMask(false); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  if (scene.env.set) { const envM = envMatrix(); drawSplats(proj, M4.mul(viewStage, envM), vpW, vpH, envM, o.maxPx); }
+  if (g && opts.shadow) drawShadow(proj, viewStage);
+  if (opts.grid) drawGrid(proj, viewStage, o.gridC, o.gridSize, o.xr ? 0.4 : 0.6);
+  if (g) drawGLB(g, g.blend, proj, viewStage, o.camStage, rig);
+  gl.disable(gl.DEPTH_TEST); gl.depthMask(true);
+  if (o.xr) { drawPanel(proj, view); drawRays(proj, view); }
   gl.bindVertexArray(null);
 }
 
 /* ---------------- desktop orbit camera ---------------- */
-const cam = { yaw: 0.95, pitch: 0.2, dist: 8.5, fov: 0.62, target: [0, 0.85, 0] };
+const cam = { yaw: 0.9, pitch: 0.22, dist: 8, fov: 0.62, target: [0, 0.75, 0] };
 // the part of the screen not covered by the floating panels, in CSS pixels
 function freeArea() {
   const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1;
   let l = 0, r = W, t = 60, b = H - 40;
-  const L = document.getElementById('modelPanel'), Rt = document.getElementById('buildPanel');
+  const L = document.getElementById('scenePanel'), Rt = document.getElementById('buildPanel');
   const shown = (el) => el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
   if (shown(L)) { const q = L.getBoundingClientRect(); if (q.height > H * 0.6) l = q.right + 8; else b = Math.min(b, q.top - 8); }
   if (shown(Rt)) { const q = Rt.getBoundingClientRect(); if (q.height > H * 0.6) r = q.left - 8; else b = Math.min(b, q.top - 8); }
@@ -1155,13 +1673,14 @@ function lensShift() {
   return [((f.l + f.r) / 2 - f.W / 2) / (f.W / 2), -((f.t + f.b) / 2 - f.H / 2) / (f.H / 2)];
 }
 function resetView() {
-  cam.yaw = 0.95; cam.pitch = 0.2;
-  cam.target = [0, model.height * 0.42, 0];
+  const fb = focusBox();
+  cam.yaw = 0.9; cam.pitch = 0.22;
+  cam.target = [fb.c[0], fb.min[1] + fb.height * 0.45, fb.c[2]];
   const f = freeArea(), aspect = f.W / f.H, tf = Math.tan(cam.fov / 2);
   const halfW = (f.r - f.l) / f.W, halfH = (f.b - f.t) / f.H;
-  const dw = (model.len * 0.56) / (tf * aspect * halfW);
-  const dh = (model.height * 0.62 + model.len * 0.1) / (tf * halfH);
-  cam.dist = clamp(Math.max(dw, dh, model.len * 0.8 + 1), 1, 200);
+  const dw = (fb.len * 0.58) / (tf * aspect * halfW);
+  const dh = (fb.height * 0.62 + fb.len * 0.1) / (tf * halfH);
+  cam.dist = clamp(Math.max(dw, dh, fb.len * 0.8 + 0.5), 0.3, 50000);
 }
 function camEye() { return vadd(cam.target, [Math.cos(cam.pitch) * Math.sin(cam.yaw) * cam.dist, Math.sin(cam.pitch) * cam.dist, Math.cos(cam.pitch) * Math.cos(cam.yaw) * cam.dist]); }
 let lastT = 0, rafId = 0, fpsAcc = 0, fpsN = 0, fps = 0;
@@ -1170,6 +1689,11 @@ function resize() {
   const w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
   if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
 }
+function sceneExtent() {
+  let e = 50;
+  if (scene.env.set) e = Math.max(e, scene.env.across * scene.env.scale * 2 + vlen(scene.env.pos));
+  return e;
+}
 function frame(t) {
   rafId = 0;
   if (xr) return;
@@ -1177,55 +1701,86 @@ function frame(t) {
   const dt = lastT ? clamp((t - lastT) / 1000, 0, 0.1) : 0.016;
   lastT = t;
   fpsAcc += dt; fpsN++; if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; updateStats(); }
-  if (state.turntable) stage.yaw += dt * 0.16;
   resize();
-  if (!model.set) return;
   const w = canvas.width, h = canvas.height;
-  const proj = M4.persp(cam.fov, w / h, 0.05, 800);
+  const near = clamp(cam.dist * 0.004, 0.01, 5), far = Math.max(near * 20000, cam.dist * 4, sceneExtent() + cam.dist);
+  const proj = M4.persp(cam.fov, w / h, near, Math.min(far, near * 1e6));
   const shift = lensShift();
   proj[8] = -shift[0]; proj[9] = -shift[1];
-  const view = M4.lookAt(camEye(), cam.target, [0, 1, 0]);
-  requestSort(M4.mul(view, M4.mul(stageMatrix(), fitMatrix())));
+  const eye = camEye(), view = M4.lookAt(eye, cam.target, [0, 1, 0]);
+  const camStage = M4.apply(M4.invert(stageMatrix()), eye);
+  if (scene.env.set) requestSort(M4.mul(M4.mul(view, stageMatrix()), envMatrix()));
+  prepareFrame(camStage);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.viewport(0, 0, w, h);
-  gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-  drawWorld(proj, view, w, h, { maxPx: 1024, blend: 'opaque' });
+  gl.clearColor(0, 0, 0, 0); gl.clearDepth(1);
+  gl.depthMask(true);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const gs = clamp(cam.dist * 2.5, 12, 40000);
+  drawWorld(proj, view, w, h, { maxPx: 1024, camStage, gridC: cam.target, gridSize: gs });
 }
 function startLoop() { if (!rafId && !xr) { lastT = 0; rafId = requestAnimationFrame(frame); } }
 
 // orbit / zoom / pan with mouse, touch or pen
 const pointers = new Map();
 let pinch0 = null;
-canvas.addEventListener('pointerdown', (e) => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey }); try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } canvas.classList.add('dragging'); pinch0 = null; });
+canvas.addEventListener('pointerdown', (e) => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey }); try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } canvas.classList.add('dragging'); pinch0 = null; canvas.focus({ preventScroll: true }); });
 canvas.addEventListener('pointermove', (e) => {
   const p = pointers.get(e.pointerId);
   if (!p) return;
   const dx = e.clientX - p.x, dy = e.clientY - p.y;
   p.x = e.clientX; p.y = e.clientY;
   if (pointers.size === 1) {
-    if (p.btn === 2 || p.shift) pan(dx, dy);
-    else { cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.005, -0.15, 1.35); }
+    if (p.btn === 2 || p.btn === 1 || p.shift) pan(dx, dy);
+    else { cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.005, -1.2, 1.45); }
   } else if (pointers.size === 2) {
     const [a, b] = [...pointers.values()];
     const d = Math.hypot(a.x - b.x, a.y - b.y);
-    if (pinch0) cam.dist = clamp(cam.dist * (pinch0 / d), 0.5, 80);
+    if (pinch0) cam.dist = clamp(cam.dist * (pinch0 / d), 0.2, 50000);
     pinch0 = d;
   }
 });
 function pan(dx, dy) {
   const k = cam.dist * 0.0012;
   const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
-  cam.target = vadd(cam.target, vadd(vmul(right, -dx * k), [0, dy * k, 0]));
+  const up = [-Math.sin(cam.pitch) * Math.sin(cam.yaw), Math.cos(cam.pitch), -Math.sin(cam.pitch) * Math.cos(cam.yaw)];
+  cam.target = vadd(cam.target, vadd(vmul(right, -dx * k), vmul(up, dy * k)));
 }
 for (const ev of ['pointerup', 'pointercancel']) canvas.addEventListener(ev, (e) => { pointers.delete(e.pointerId); pinch0 = null; if (!pointers.size) canvas.classList.remove('dragging'); });
-canvas.addEventListener('wheel', (e) => { e.preventDefault(); cam.dist = clamp(cam.dist * Math.exp(e.deltaY * 0.0012), 0.5, 80); }, { passive: false });
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); cam.dist = clamp(cam.dist * Math.exp(e.deltaY * 0.0012), 0.2, 50000); }, { passive: false });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+/* ---------------- alignment edits (keyboard, fields, hands) ---------------- */
+function alignObj(which) { return which === 'env' ? (scene.env.set ? scene.env : null) : which === 'veh' ? (scene.veh.glb ? scene.veh : null) : stage; }
+function nudge(which, move, dy, dyaw, kScale) {
+  const o = alignObj(which);
+  if (!o) return;
+  o.pos = vadd(o.pos, [move[0], dy, move[1]]);
+  o.yaw += dyaw;
+  o.scale = clamp(o.scale * kScale, SCALE_MIN, SCALE_MAX);
+  alignChanged();
+}
+window.addEventListener('keydown', (e) => {
+  if (xr || e.ctrlKey || e.metaKey || (e.target && e.target.closest && e.target.closest('input, select, textarea, button, summary, label'))) return;
+  const m = e.shiftKey ? 10 : e.altKey ? 0.1 : 1, s = opts.step * m, a = (Math.PI / 180) * m;
+  const fwd = [-Math.sin(cam.yaw), -Math.cos(cam.yaw)], right = [Math.cos(cam.yaw), -Math.sin(cam.yaw)];
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  const moves = {
+    ArrowUp: () => nudge(opts.target, [fwd[0] * s, fwd[1] * s], 0, 0, 1), ArrowDown: () => nudge(opts.target, [-fwd[0] * s, -fwd[1] * s], 0, 0, 1),
+    ArrowRight: () => nudge(opts.target, [right[0] * s, right[1] * s], 0, 0, 1), ArrowLeft: () => nudge(opts.target, [-right[0] * s, -right[1] * s], 0, 0, 1),
+    PageUp: () => nudge(opts.target, [0, 0], s, 0, 1), PageDown: () => nudge(opts.target, [0, 0], -s, 0, 1),
+    r: () => nudge(opts.target, [0, 0], s, 0, 1), f: () => nudge(opts.target, [0, 0], -s, 0, 1),
+    q: () => nudge(opts.target, [0, 0], 0, a, 1), e: () => nudge(opts.target, [0, 0], 0, -a, 1),
+    ']': () => nudge(opts.target, [0, 0], 0, 0, 1 + 0.02 * m), '[': () => nudge(opts.target, [0, 0], 0, 0, 1 / (1 + 0.02 * m)),
+    '}': () => nudge(opts.target, [0, 0], 0, 0, 1.2), '{': () => nudge(opts.target, [0, 0], 0, 0, 1 / 1.2),
+  };
+  if (moves[k]) { e.preventDefault(); moves[k](); }
+});
 
 /* ---------------- WebXR ---------------- */
 let xr = null, xrMode = null;
 const head = { pos: [0, 1.6, 0], quat: [0, 0, 0, 1] };
-const panel = { c: [0, 1.4, -1], r: [0.23, 0, 0], u: [0, 0.29, 0], hw: 0.23, hh: 0.29, n: [0, 0, 1], tex: null, cv: null, ctx: null, W: 1024, H: 1290, buttons: [], hover: null, dirty: true, offFor: 0, yaw: 0 };
+const panel = { c: [0, 1.4, -1], r: [0.3, 0, 0], u: [0, 0.2, 0], hw: 0.3, hh: 0.2, n: [0, 0, 1], tex: null, cv: null, ctx: null, out: null, W: 1536, H: 1000, buttons: [], hover: null, dirty: true, offFor: 0, yaw: 0 };
 const grabs = new Map();
 let rays = [];
 function headYaw() { const f = quatRotate(head.quat, [0, 0, -1]); return Math.atan2(-f[0], -f[2]); }
@@ -1234,19 +1789,24 @@ function placeAll() {
   const f = [-Math.sin(yaw), 0, -Math.cos(yaw)], right = [Math.cos(yaw), 0, -Math.sin(yaw)];
   const dF = vnorm(vadd(vmul(f, -0.55), vmul(right, 0.85)));
   stage.yaw = Math.atan2(-dF[2], dF[0]);
-  if (state.life) {
+  const fb = focusBox(), len = Math.max(0.3, Math.min(fb.len, 12));
+  let target;
+  if (opts.life) {
     stage.scale = 1;
-    const d = model.len * 0.5 + 2.6;
-    stage.pos = [head.pos[0] + f[0] * d, xr.floorY, head.pos[2] + f[2] * d];
+    const d = len * 0.5 + 2.6;
+    target = [head.pos[0] + f[0] * d, xr.floorY, head.pos[2] + f[2] * d];
   } else {
-    stage.scale = 0.7 / Math.max(0.3, model.len);
-    stage.pos = [head.pos[0] + f[0] * 0.75, head.pos[1] - 0.48, head.pos[2] + f[2] * 0.75];
+    stage.scale = 0.7 / len;
+    target = [head.pos[0] + f[0] * 0.75, head.pos[1] - 0.48, head.pos[2] + f[2] * 0.75];
   }
+  // put the vehicle's footprint centre (and floor) on the target
+  const c = M4.apply(M4.mul(M4.rotY(stage.yaw), M4.scale(stage.scale)), [fb.c[0], fb.min[1], fb.c[2]]);
+  stage.pos = vsub(target, c);
   placePanel(yaw);
 }
 function placePanel(yaw) {
   const f = [-Math.sin(yaw), 0, -Math.cos(yaw)], right = [Math.cos(yaw), 0, -Math.sin(yaw)];
-  const c = vadd(vadd(head.pos, vmul(f, 0.85)), vadd(vmul(right, -0.5), [0, -0.12, 0]));
+  const c = vadd(vadd(head.pos, vmul(f, 1.0)), vadd(vmul(right, -0.45), [0, -0.1, 0]));
   setPanelPose(c);
   panel.yaw = yaw;
 }
@@ -1283,39 +1843,44 @@ function onSelectStart(e) {
   const ray = rayOf(e.frame, e.inputSource);
   if (!ray) return;
   const hit = panelHit(ray.o, ray.d);
-  if (hit) { const b = buttonAt(hit.x, hit.y); if (b) { b.act(); Sound.click(); } return; }
+  if (hit) { const b = buttonAt(hit.x, hit.y); if (b) { b.act(); Sound.click(); panel.dirty = true; } return; }
   const g = gripOf(e.frame, e.inputSource);
   if (g) grabs.set(e.inputSource, { last: g, cur: g });
 }
 function onSelectEnd(e) { grabs.delete(e.inputSource); }
+function grabWhich() { return alignObj(opts.xrTarget) ? opts.xrTarget : 'all'; }
 function updateGrabs(frame) {
   for (const [src, g] of grabs) { const p = gripOf(frame, src); if (p) g.cur = p; }
   const list = [...grabs.values()];
+  if (!list.length) return;
+  const which = grabWhich(), o = alignObj(which), isStage = which === 'all';
+  const inv = isStage ? null : M4.invert(stageMatrix());
+  const P = (p) => (inv ? M4.apply(inv, p) : p);
+  const fine = opts.fine ? 0.2 : 1;
   if (list.length === 1) {
-    const g = list[0];
-    const d = vsub(g.cur, g.last);
-    stage.pos = vadd(stage.pos, state.life ? [d[0], 0, d[2]] : d);
-  } else if (list.length >= 2) {
-    const a = list[0], b = list[1];
-    const midL = vmul(vadd(a.last, b.last), 0.5), midC = vmul(vadd(a.cur, b.cur), 0.5);
-    const dL = Math.hypot(a.last[0] - b.last[0], a.last[2] - b.last[2]) || 1e-3, dC = Math.hypot(a.cur[0] - b.cur[0], a.cur[2] - b.cur[2]) || 1e-3;
-    const angL = Math.atan2(b.last[2] - a.last[2], b.last[0] - a.last[0]), angC = Math.atan2(b.cur[2] - a.cur[2], b.cur[0] - a.cur[0]);
-    let dAng = angC - angL; if (dAng > Math.PI) dAng -= TAU; if (dAng < -Math.PI) dAng += TAU;
-    const k = clamp(dC / dL, 0.8, 1.25);
-    const newScale = clamp(stage.scale * k, 0.02, 4), kk = newScale / stage.scale;
-    stage.scale = newScale;
-    const th = -dAng, c = Math.cos(th), s = Math.sin(th);
-    const rel = vsub(stage.pos, midL);
-    const moved = [(c * rel[0] + s * rel[2]) * kk, rel[1] * kk, (-s * rel[0] + c * rel[2]) * kk];
-    stage.yaw += th;
-    stage.pos = vadd(midC, moved);
-    if (state.life) stage.pos[1] = xr.floorY;
+    const g = list[0], d = vmul(vsub(P(g.cur), P(g.last)), fine);
+    o.pos = vadd(o.pos, isStage && opts.life ? [d[0], 0, d[2]] : d);
+  } else {
+    const al = P(list[0].last), ac = P(list[0].cur), bl = P(list[1].last), bc = P(list[1].cur);
+    const midL = vmul(vadd(al, bl), 0.5), midC = vmul(vadd(ac, bc), 0.5);
+    const dL = Math.hypot(al[0] - bl[0], al[2] - bl[2]) || 1e-3, dC = Math.hypot(ac[0] - bc[0], ac[2] - bc[2]) || 1e-3;
+    let dAng = Math.atan2(bc[2] - ac[2], bc[0] - ac[0]) - Math.atan2(bl[2] - al[2], bl[0] - al[0]);
+    if (dAng > Math.PI) dAng -= TAU; if (dAng < -Math.PI) dAng += TAU;
+    const k = 1 + (clamp(dC / dL, 0.8, 1.25) - 1) * fine;
+    const newScale = isStage ? clamp(o.scale * k, 0.02, 4) : clamp(o.scale * k, SCALE_MIN, SCALE_MAX), kk = newScale / o.scale;
+    o.scale = newScale;
+    const th = -dAng * fine, c = Math.cos(th), s = Math.sin(th);
+    const rel = vsub(o.pos, midL);
+    o.yaw += th;
+    o.pos = vadd(vadd(midL, vmul(vsub(midC, midL), fine)), [(c * rel[0] + s * rel[2]) * kk, rel[1] * kk, (-s * rel[0] + c * rel[2]) * kk]);
+    if (isStage && opts.life) o.pos[1] = xr.floorY;
   }
   for (const g of list) g.last = g.cur;
+  if (!isStage) alignChanged(true);
 }
 
 async function startXR() {
-  if (!xrMode || xr || !model.set) return;
+  if (!xrMode || xr) return;
   Sound.init();
   ui.btnXR.disabled = true;
   let session;
@@ -1323,7 +1888,7 @@ async function startXR() {
   catch (e) { ui.btnXR.disabled = false; setXRStatus(`<strong>The glasses view didn’t start.</strong> ${esc(e && e.message ? e.message : String(e))}`); return; }
   try {
     if (gl.makeXRCompatible) { try { await gl.makeXRCompatible(); } catch (err) { /* context already xrCompatible */ } }
-    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl, { antialias: false, alpha: true }), depthNear: 0.05, depthFar: 500 });
+    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl, { antialias: false, alpha: true, depth: true }), depthNear: 0.05, depthFar: 20000 });
     let ref, floor = true;
     try { ref = await session.requestReferenceSpace('local-floor'); } catch (err) { ref = await session.requestReferenceSpace('local'); floor = false; }
     xr = { session, ref, floor, floorY: 0, placed: false, last: 0, blend: session.environmentBlendMode || (xrMode === 'immersive-ar' ? 'alpha-blend' : 'opaque') };
@@ -1348,6 +1913,7 @@ function onXREnd() {
   document.body.classList.remove('in-xr');
   stage.pos = [0, 0, 0]; stage.yaw = 0; stage.scale = 1;
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  syncAlign();
   startLoop();
 }
 function xrFrame(t, frame) {
@@ -1361,8 +1927,6 @@ function xrFrame(t, frame) {
   const hp = pose.transform.position, hq = pose.transform.orientation;
   head.pos = [hp.x, hp.y, hp.z]; head.quat = [hq.x, hq.y, hq.z, hq.w];
   if (!xr.placed) { xr.floorY = xr.floor ? 0 : head.pos[1] - 1.55; placeAll(); xr.placed = true; }
-  if (state.turntable && !grabs.size) stage.yaw += dt * 0.16;
-  // inputs: rays, hover, grabs
   rays = [];
   panel.hover = null;
   for (const src of s.inputSources) {
@@ -1380,17 +1944,19 @@ function xrFrame(t, frame) {
   const hoverKey = panel.hover || '';
   if (hoverKey !== panel.lastHover) { panel.lastHover = hoverKey; panel.dirty = true; }
   if (panel.dirty) paintPanel();
-  // sort for the head, draw both eyes
-  const modelM = M4.mul(stageMatrix(), fitMatrix());
-  requestSort(M4.mul(pose.transform.inverse.matrix, modelM));
+  const stageM = stageMatrix(), camStage = M4.apply(M4.invert(stageM), head.pos);
+  if (scene.env.set) requestSort(M4.mul(M4.mul(pose.transform.inverse.matrix, stageM), envMatrix()));
+  prepareFrame(camStage);
   const layer = s.renderState.baseLayer;
   gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
   if (xr.blend === 'opaque') gl.clearColor(0.06, 0.065, 0.07, 1); else gl.clearColor(0, 0, 0, 0);
+  gl.depthMask(true);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const fb = focusBox();
   for (const view of pose.views) {
     const vp = layer.getViewport(view);
     gl.viewport(vp.x, vp.y, vp.width, vp.height);
-    drawWorld(view.projectionMatrix, view.transform.inverse.matrix, vp.width, vp.height, { maxPx: 512, xr: true, blend: xr.blend });
+    drawWorld(view.projectionMatrix, view.transform.inverse.matrix, vp.width, vp.height, { maxPx: 512, xr: true, camStage, gridC: fb.c, gridSize: Math.max(8, fb.len * 2.5) });
   }
 }
 function drawPanel(proj, view) {
@@ -1401,7 +1967,7 @@ function drawPanel(proj, view) {
   gl.uniform3fv(R.panel.u.uC, panel.c); gl.uniform3fv(R.panel.u.uR, panel.r); gl.uniform3fv(R.panel.u.uU, panel.u);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, panel.tex); gl.uniform1i(R.panel.u.uTex, 0);
   gl.uniform1f(R.panel.u.uOpacity, 1);
-  gl.bindVertexArray(panelVAO);
+  gl.bindVertexArray(quadVAOs.panel);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 function drawRays(proj, view) {
@@ -1418,84 +1984,158 @@ function drawRays(proj, view) {
   }
 }
 
-/* ---------------- in-glasses panel (canvas texture) ---------------- */
+/* ---------------- in-glasses panel (canvas texture, two columns) ---------------- */
 const PF = { display: '"Archivo", "Arial", sans-serif', mono: '"IBM Plex Mono", ui-monospace, monospace' };
+const PC = { fg: '#f0ebe1', muted: '#a7a39a', sand: '#c9b48a', ink: '#16130d' };
+function fitText(x, s, maxW, size, weight, family, min) {
+  let f = size;
+  x.font = `${weight} ${f}px ${family}`;
+  while (x.measureText(s).width > maxW && f > (min || 16)) { f -= 1; x.font = `${weight} ${f}px ${family}`; }
+  if (x.measureText(s).width > maxW) { while (s.length > 1 && x.measureText(s + '…').width > maxW) s = s.slice(0, -1); s += '…'; }
+  return s;
+}
 function paintPanel() {
   panel.dirty = false;
-  if (!panel.cv) { panel.cv = document.createElement('canvas'); panel.cv.width = panel.W; panel.cv.height = panel.H; panel.ctx = panel.cv.getContext('2d'); panel.tex = gl.createTexture(); }
-  const x = panel.ctx, W = panel.W, H = panel.H;
-  const btns = [];
-  x.clearRect(0, 0, W, H);
-  rr(x, 4, 4, W - 8, H - 8, 36); x.fillStyle = 'rgba(17,18,20,0.9)'; x.fill(); x.lineWidth = 3; x.strokeStyle = 'rgba(201,180,138,0.55)'; x.stroke();
-  const grade = byId(CFG.grades, state.grade);
-  x.textBaseline = 'alphabetic'; x.textAlign = 'left';
-  x.fillStyle = '#c9b48a'; x.font = `600 26px ${PF.mono}`; x.fillText('CONFIGURATOR · CONCEPT', 56, 76);
-  x.fillStyle = '#f0ebe1'; x.font = `800 64px ${PF.display}`; x.fillText(CFG.model.toUpperCase(), 56, 146);
-  x.fillStyle = '#a7a39a'; x.font = `500 30px ${PF.display}`; x.fillText(`${grade.name} · ${byId(CFG.wheels, state.wheels).short}`, 56, 190);
-  x.textAlign = 'right'; x.fillStyle = '#f0ebe1'; x.font = `600 48px ${PF.mono}`; x.fillText(money(price()), W - 56, 146);
-  x.fillStyle = '#a7a39a'; x.font = `500 22px ${PF.mono}`; x.fillText('EST. DRIVE-AWAY', W - 56, 186);
-  let y = 250;
-  const label = (t) => { x.textAlign = 'left'; x.fillStyle = '#c9b48a'; x.font = `600 24px ${PF.mono}`; x.fillText(t, 56, y); y += 22; };
+  const W = panel.W, MAXH = 2200;
+  if (!panel.cv) {
+    panel.cv = document.createElement('canvas'); panel.cv.width = W; panel.cv.height = MAXH; panel.ctx = panel.cv.getContext('2d');
+    panel.out = document.createElement('canvas'); panel.out.width = W; panel.tex = gl.createTexture();
+  }
+  const x = panel.ctx, btns = [];
+  x.clearRect(0, 0, W, MAXH);
+  x.textBaseline = 'alphabetic';
   const hov = (id) => panel.hover === id;
-  // paint swatches
-  label('PAINT · ' + byId(CFG.paints, state.paint).name.toUpperCase());
-  CFG.paints.forEach((p, i) => {
-    const cx = 110 + i * 150, cy = y + 64, r = 50;
-    x.beginPath(); x.arc(cx, cy, r, 0, TAU);
-    x.fillStyle = `rgb(${p.rgb.map((c) => Math.round(clamp(c * 1.25, 0, 1) * 255)).join(',')})`; x.fill();
-    if (state.paint === p.id || hov('paint:' + p.id)) { x.beginPath(); x.arc(cx, cy, r + 12, 0, TAU); x.lineWidth = state.paint === p.id ? 6 : 3; x.strokeStyle = '#c9b48a'; x.stroke(); }
-    btns.push({ id: 'paint:' + p.id, x: cx - r - 14, y: cy - r - 14, w: 2 * r + 28, h: 2 * r + 28, act: () => setState({ paint: p.id }) });
-  });
-  y += 160;
-  const seg = (title, items, cur, key) => {
-    label(title);
-    const w = (W - 112 - 16 * (items.length - 1)) / items.length;
-    items.forEach((it, i) => {
-      const bx = 56 + i * (w + 16), by = y + 8, bh = 92, id = key + ':' + it.id, on = cur === it.id;
-      rr(x, bx, by, w, bh, 16);
-      x.fillStyle = on ? '#c9b48a' : hov(id) ? 'rgba(240,235,225,0.16)' : 'rgba(240,235,225,0.07)'; x.fill();
-      x.fillStyle = on ? '#16130d' : '#f0ebe1'; x.textAlign = 'center'; x.font = `700 32px ${PF.display}`;
-      x.fillText(it.short || it.name, bx + w / 2, by + 58);
-      btns.push({ id, x: bx, y: by, w, h: bh, act: () => setState({ [key]: it.id }) });
-    });
-    y += 132;
+  const colW = 692, A = { x: 56, y: 0 }, B = { x: 56 + colW + 40, y: 0 };
+  const label = (col, t) => { if (col.afterInfo) { col.y += 14; col.afterInfo = false; } x.textAlign = 'left'; x.fillStyle = PC.sand; x.font = `600 24px ${PF.mono}`; x.fillText(fitText(x, t.toUpperCase(), colW, 24, 600, PF.mono), col.x, col.y + 24); col.y += 40; };
+  const pill = (bx, by, w, h, id, on, txt, act, opt2) => {
+    const disabled = opt2 && opt2.disabled;
+    rr(x, bx, by, w, h, 14);
+    x.fillStyle = on ? PC.sand : disabled ? 'rgba(240,235,225,0.03)' : hov(id) ? 'rgba(240,235,225,0.16)' : 'rgba(240,235,225,0.07)'; x.fill();
+    x.fillStyle = on ? PC.ink : disabled ? 'rgba(240,235,225,0.3)' : PC.fg; x.textAlign = 'center';
+    const s = fitText(x, txt, w - 20, (opt2 && opt2.size) || 28, 700, PF.display, 16);
+    x.fillText(s, bx + w / 2, by + h / 2 + 10);
+    if (!disabled) btns.push({ id, x: bx, y: by, w, h, act });
   };
-  seg('GRADE', CFG.grades, state.grade, 'grade');
-  seg('WHEELS', CFG.wheels, state.wheels, 'wheels');
-  label('ACCESSORIES');
-  const cw = (W - 112 - 16) / 2;
-  CFG.extras.forEach((e, i) => {
-    const col = i % 2, row = Math.floor(i / 2);
-    const bx = 56 + col * (cw + 16), by = y + 8 + row * 96, bh = 80, id = 'extra:' + e.id, on = state.extras.has(e.id);
-    rr(x, bx, by, cw, bh, 16);
-    x.fillStyle = hov(id) ? 'rgba(240,235,225,0.16)' : 'rgba(240,235,225,0.07)'; x.fill();
-    if (on) { x.lineWidth = 4; x.strokeStyle = '#c9b48a'; x.stroke(); }
-    rr(x, bx + 22, by + 22, 36, 36, 8); x.fillStyle = on ? '#c9b48a' : 'rgba(240,235,225,0.15)'; x.fill();
-    if (on) { x.strokeStyle = '#16130d'; x.lineWidth = 5; x.beginPath(); x.moveTo(bx + 30, by + 41); x.lineTo(bx + 38, by + 50); x.lineTo(bx + 52, by + 30); x.stroke(); }
-    x.textAlign = 'left'; x.fillStyle = '#f0ebe1'; x.font = `600 30px ${PF.display}`; x.fillText(e.name, bx + 76, by + 52);
-    x.textAlign = 'right'; x.fillStyle = '#a7a39a'; x.font = `500 22px ${PF.mono}`; x.fillText('+' + money(e.price), bx + cw - 20, by + 52);
-    btns.push({ id, x: bx, y: by, w: cw, h: bh, act: () => toggleExtra(e.id) });
+  const cfg = scene.cfg, g = scene.veh.glb;
+  const names = cfg ? cfgNames(cfg, scene.sel) : new Set();
+
+  /* column A: title and choices */
+  A.y = 56;
+  x.textAlign = 'left'; x.fillStyle = PC.sand; x.font = `600 24px ${PF.mono}`; x.fillText('CONFIGURATOR', A.x, A.y + 20); A.y += 34;
+  const title = cfg ? cfg.name : g ? g.name.replace(/\.glb$/i, '') : 'No vehicle loaded';
+  x.fillStyle = PC.fg; x.fillText(fitText(x, title.toUpperCase(), colW, 60, 800, PF.display, 30), A.x, A.y + 52); A.y += 72;
+  const sub = cfg ? cfg.groups.filter((gr) => gr.hidden).map((gr) => { const o = gr.options.find((op) => scene.sel.get(gr.name).has(op.name)); return o ? o.title : ''; }).filter(Boolean).join(' · ') : selectedVariantName();
+  if (sub) { x.fillStyle = PC.muted; x.fillText(fitText(x, sub, colW, 28, 500, PF.display, 18), A.x, A.y + 26); A.y += 44; }
+  A.y += 16;
+  const toggleGroups = [];
+  if (cfg) {
+    for (const gr of cfg.groups) {
+      const how = cfgDisplay(gr, names, g), cur = scene.sel.get(gr.name);
+      if (how === 'none') continue;
+      if (how === 'toggle') { toggleGroups.push(gr); continue; }
+      const curOpt = gr.options.find((o) => cur.has(o.name));
+      if (how === 'info') {
+        x.textAlign = 'left'; x.fillStyle = PC.sand; x.font = `600 22px ${PF.mono}`; x.fillText(gr.title.toUpperCase(), A.x, A.y + 26);
+        x.fillStyle = PC.fg; x.fillText(fitText(x, curOpt ? curOpt.title : '—', colW - 260, 28, 600, PF.display, 18), A.x + 260, A.y + 28);
+        A.y += 48; A.afterInfo = true; continue;
+      }
+      if (how === 'swatch') {
+        label(A, `${gr.title} · ${curOpt ? curOpt.title : ''}`);
+        const r = 38, pitch = 106, perRow = Math.floor((colW + 20) / pitch);
+        gr.options.forEach((o, i) => {
+          const cx = A.x + r + 12 + (i % perRow) * pitch, cy = A.y + r + 14 + Math.floor(i / perRow) * pitch, id = 'opt:' + gr.name + ':' + o.name;
+          const ok = cfgAvailable(o, names), cols = cfgSwatch(o, g);
+          x.save(); x.globalAlpha = ok ? 1 : 0.25;
+          x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fillStyle = cols[0]; x.fill();
+          if (cols[1]) { x.beginPath(); x.arc(cx, cy, r, Math.PI, TAU); x.fillStyle = cols[1]; x.fill(); }
+          x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.lineWidth = 2; x.strokeStyle = 'rgba(255,255,255,0.25)'; x.stroke();
+          x.restore();
+          if (cur.has(o.name) || hov(id)) { x.beginPath(); x.arc(cx, cy, r + 10, 0, TAU); x.lineWidth = cur.has(o.name) ? 6 : 3; x.strokeStyle = PC.sand; x.stroke(); }
+          if (ok) btns.push({ id, x: cx - r - 12, y: cy - r - 12, w: 2 * r + 24, h: 2 * r + 24, act: () => chooseOption(gr.name, o.name) });
+        });
+        A.y += Math.ceil(gr.options.length / perRow) * pitch + 16;
+        continue;
+      }
+      label(A, gr.title);
+      const opts2 = gr.options.filter((o) => !o.isNone), per = Math.min(3, opts2.length), w = (colW - 14 * (per - 1)) / per;
+      opts2.forEach((o, i) => {
+        const bx = A.x + (i % per) * (w + 14), by = A.y + Math.floor(i / per) * 86;
+        pill(bx, by, w, 72, 'opt:' + gr.name + ':' + o.name, cur.has(o.name), o.title, () => chooseOption(gr.name, o.name), { disabled: !cfgAvailable(o, names) });
+      });
+      A.y += Math.ceil(opts2.length / per) * 86 + 22;
+    }
+  } else if (g && g.variantNames.length) {
+    label(A, 'Material variant');
+    const n = g.variantNames.length, vi = scene.fallback.variant;
+    pill(A.x, A.y, 90, 72, 'var:prev', false, '‹', () => setFallbackVariant((vi - 1 + n) % n), { size: 40 });
+    pill(A.x + colW - 90, A.y, 90, 72, 'var:next', false, '›', () => setFallbackVariant((vi + 1) % n), { size: 40 });
+    x.textAlign = 'center'; x.fillStyle = PC.fg; x.fillText(fitText(x, vi >= 0 ? g.variantNames[vi] : 'Default', colW - 220, 28, 600, PF.mono, 16), A.x + colW / 2, A.y + 46);
+    A.y += 100;
+  } else {
+    x.textAlign = 'left'; x.fillStyle = PC.muted; x.font = `500 28px ${PF.display}`;
+    x.fillText('Load a vehicle (.glb) and its configuration', A.x, A.y + 30);
+    x.fillText('(.xml) on the page to choose options here.', A.x, A.y + 68);
+    A.y += 100;
+  }
+
+  /* column B: accessories, alignment, view */
+  B.y = 56;
+  const toggles = [];
+  if (cfg) for (const gr of toggleGroups) toggles.push({ title: gr.title, items: gr.options.filter((o) => !o.isNone).map((o) => ({ id: 'opt:' + gr.name + ':' + o.name, name: o.title, on: scene.sel.get(gr.name).has(o.name), ok: cfgAvailable(o, names), act: () => chooseOption(gr.name, o.name) })) });
+  else if (g && scene.fallback.accNodes.length) toggles.push({ title: 'Accessories', items: scene.fallback.accNodes.map((n) => ({ id: 'acc:' + n, name: accLabel(n), on: scene.fallback.acc.has(n), ok: true, act: () => toggleFallbackAcc(n) })) });
+  for (const tg of toggles) {
+    label(B, tg.title);
+    const cw = (colW - 14) / 2, rh = 62;
+    tg.items.forEach((it, i) => {
+      const bx = B.x + (i % 2) * (cw + 14), by = B.y + Math.floor(i / 2) * (rh + 8);
+      rr(x, bx, by, cw, rh, 12);
+      x.fillStyle = !it.ok ? 'rgba(240,235,225,0.03)' : hov(it.id) ? 'rgba(240,235,225,0.16)' : 'rgba(240,235,225,0.07)'; x.fill();
+      if (it.on) { x.lineWidth = 3; x.strokeStyle = PC.sand; x.stroke(); }
+      rr(x, bx + 14, by + 16, 30, 30, 7); x.fillStyle = it.on ? PC.sand : 'rgba(240,235,225,0.15)'; x.fill();
+      if (it.on) { x.strokeStyle = PC.ink; x.lineWidth = 4; x.beginPath(); x.moveTo(bx + 20, by + 31); x.lineTo(bx + 27, by + 39); x.lineTo(bx + 39, by + 23); x.stroke(); }
+      x.textAlign = 'left'; x.fillStyle = it.ok ? PC.fg : 'rgba(240,235,225,0.3)';
+      x.fillText(fitText(x, it.name, cw - 70, 23, 600, PF.display, 15), bx + 56, by + 39);
+      if (it.ok) btns.push({ id: it.id, x: bx, y: by, w: cw, h: rh, act: it.act });
+    });
+    B.y += Math.ceil(tg.items.length / 2) * (rh + 8) + 22;
+  }
+  label(B, 'Your hands move');
+  const tw = (colW - 28) / 3;
+  [['all', 'Everything'], ['veh', 'Vehicle'], ['env', 'Environment']].forEach(([id, txt], i) => {
+    pill(B.x + i * (tw + 14), B.y, tw, 72, 'tgt:' + id, opts.xrTarget === id, txt, () => { opts.xrTarget = id; syncAlign(); }, { disabled: id !== 'all' && !alignObj(id) });
   });
-  y += 8 + 3 * 96 + 26;
-  // view controls
-  const vw = (W - 112 - 32) / 3;
-  [['turntable', state.turntable ? 'Turntable on' : 'Turntable off', () => setState({ turntable: !state.turntable })],
-    ['life', state.life ? 'Life size' : 'Table-top', () => { state.life = !state.life; placeAll(); panel.dirty = true; syncDom(); }],
+  B.y += 92;
+  const vw = (colW - 42) / 4;
+  [['life', opts.life ? 'Life size' : 'Table-top', () => { opts.life = !opts.life; placeAll(); syncAlign(); }],
+    ['fine', opts.fine ? 'Fine: on' : 'Fine: off', () => { opts.fine = !opts.fine; }],
+    ['grid', opts.grid ? 'Grid: on' : 'Grid: off', () => { opts.grid = !opts.grid; syncAlign(); }],
     ['recentre', 'Re-centre', () => placeAll()]].forEach(([id, txt, act], i) => {
-    const bx = 56 + i * (vw + 16), by = y, bh = 84;
-    rr(x, bx, by, vw, bh, 42);
+    const bx = B.x + i * (vw + 14);
+    rr(x, bx, B.y, vw, 72, 36);
     x.fillStyle = hov('view:' + id) ? 'rgba(201,180,138,0.35)' : 'rgba(201,180,138,0.16)'; x.fill();
-    x.fillStyle = '#f0ebe1'; x.textAlign = 'center'; x.font = `700 30px ${PF.display}`; x.fillText(txt, bx + vw / 2, by + 53);
-    btns.push({ id: 'view:' + id, x: bx, y: by, w: vw, h: bh, act });
+    x.fillStyle = PC.fg; x.textAlign = 'center'; x.fillText(fitText(x, txt, vw - 16, 26, 700, PF.display, 16), bx + vw / 2, B.y + 46);
+    btns.push({ id: 'view:' + id, x: bx, y: B.y, w: vw, h: 72, act });
   });
-  y += 128;
-  x.textAlign = 'center'; x.fillStyle = '#a7a39a'; x.font = `500 25px ${PF.display}`;
-  x.fillText('Pinch the ute to move it. Pinch with both hands to resize or turn it.', W / 2, y);
-  x.fillText('Concept pricing for illustration only.', W / 2, y + 38);
-  panel.buttons = btns;
+  B.y += 100;
+  x.textAlign = 'left'; x.fillStyle = PC.muted; x.font = `500 23px ${PF.display}`;
+  x.fillText('Pinch and drag to move. Pinch with both hands to resize or turn.', B.x, B.y + 20);
+  x.fillText('Fine slows everything down for exact alignment.', B.x, B.y + 52);
+  B.y += 70;
+
+  /* composite onto a card sized to the content */
+  const H = Math.min(MAXH, Math.max(A.y, B.y) + 40);
+  const out = panel.out, o = out.getContext('2d');
+  if (out.height !== H) out.height = H;
+  o.clearRect(0, 0, W, H);
+  rr(o, 4, 4, W - 8, H - 8, 36); o.fillStyle = 'rgba(17,18,20,0.9)'; o.fill(); o.lineWidth = 3; o.strokeStyle = 'rgba(201,180,138,0.55)'; o.stroke();
+  o.strokeStyle = 'rgba(201,180,138,0.25)'; o.lineWidth = 2; o.beginPath(); o.moveTo(B.x - 20, 40); o.lineTo(B.x - 20, H - 40); o.stroke();
+  o.drawImage(panel.cv, 0, 0, W, H, 0, 0, W, H);
+  panel.H = H; panel.hh = (panel.hw * H) / W; panel.buttons = btns;
+  setPanelPose(panel.c);
   gl.bindTexture(gl.TEXTURE_2D, panel.tex);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, panel.cv);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, out);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
   gl.generateMipmap(gl.TEXTURE_2D);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -1518,117 +2158,345 @@ const Sound = (() => {
   };
 })();
 
-/* ---------------- state changes ---------------- */
-function setState(p) { Object.assign(state, p); panel.dirty = true; syncDom(); }
-function toggleExtra(id) { if (state.extras.has(id)) state.extras.delete(id); else state.extras.add(id); panel.dirty = true; syncDom(); }
-
 /* ---------------- page UI ---------------- */
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ui = {
-  btnXR: $('btnXR'), xrStatus: $('xrStatus'), modelName: $('modelName'), modelStatus: $('modelStatus'), stats: $('stats'),
-  file: $('fileInput'), urlForm: $('urlForm'), url: $('urlInput'), btnDemo: $('btnDemo'),
-  scale: $('scaleRange'), scaleOut: $('scaleOut'), crop: $('cropRange'), cropOut: $('cropOut'), floor: $('floorRange'), floorOut: $('floorOut'),
-  turntable: $('turntable'), price: $('price'), priceNote: $('priceNote'), scanNote: $('scanNote'), drop: $('drop'), toast: $('toast'),
-  gradeList: $('gradeList'), paintList: $('paintList'), paintName: $('paintName'), wheelList: $('wheelList'), extraList: $('extraList'),
+  btnXR: $('btnXR'), xrStatus: $('xrStatus'), stats: $('stats'), drop: $('drop'), toast: $('toast'),
+  envName: $('envName'), envStatus: $('envStatus'), envFile: $('envFile'), envClear: $('envClear'), urlForm: $('urlForm'), url: $('urlInput'),
+  vehName: $('vehName'), vehStatus: $('vehStatus'), vehFile: $('vehFile'), vehClear: $('vehClear'),
+  cfgName: $('cfgName'), cfgStatus: $('cfgStatus'), cfgFile: $('cfgFile'), cfgClear: $('cfgClear'),
+  fX: $('fX'), fY: $('fY'), fZ: $('fZ'), fYaw: $('fYaw'), fScale: $('fScale'), scale: $('scaleRange'), sizeOut: $('sizeOut'),
+  crop: $('cropRange'), cropIn: $('cropIn'), cropOut: $('cropOut'), step: $('stepSel'), alignText: $('alignText'),
+  grid: $('gridChk'), shadow: $('shadowChk'), exp: $('expRange'), expOut: $('expOut'),
+  buildTitle: $('buildTitle'), buildBody: $('buildBody'), summary: $('summary'), sumTitle: $('sumTitle'), sumVariant: $('sumVariant'),
 };
-function setModelStatus(html) { ui.modelStatus.innerHTML = html; }
-function setXRStatus(html) { ui.xrStatus.innerHTML = html; }
+const setXRStatus = (html) => { ui.xrStatus.innerHTML = html; };
 let toastT = 0;
-function toast(msg) { ui.toast.textContent = msg; ui.toast.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { ui.toast.hidden = true; }, 2600); }
+function toast(msg) { ui.toast.textContent = msg; ui.toast.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { ui.toast.hidden = true; }, 3200); }
+const fmtN = (v) => (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e4 ? Math.round(v / 1e3) + 'k' : Math.round(v).toLocaleString('en-AU'));
 function updateStats() {
-  if (!model.set) return;
-  ui.stats.textContent = `${model.set.n.toLocaleString('en-AU')} splats · ${model.len.toFixed(2)} m long · ${Math.round(fps)} fps`;
+  const p = [];
+  if (scene.env.set) p.push(fmtN(scene.env.set.n) + ' splats');
+  if (scene.veh.glb) p.push(fmtN(scene.veh.glb.tris) + ' triangles');
+  p.push(Math.round(fps) + ' fps');
+  ui.stats.textContent = p.join(' · ');
 }
+const fmtLen = (m) => (m >= 1000 ? (m / 1000).toFixed(m >= 10000 ? 0 : 1) + ' km' : m >= 10 ? m.toFixed(0) + ' m' : m >= 1 ? m.toFixed(2) + ' m' : (m * 100).toFixed(m >= 0.1 ? 0 : 1) + ' cm');
+const fmtScale = (s) => (s >= 1000 || s < 0.001 ? s.toExponential(3) : String(+s.toPrecision(5)));
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 
-/* build panel */
-function buildDom() {
-  ui.gradeList.innerHTML = CFG.grades.map((g) => `<button type="button" class="grade" data-grade="${g.id}" aria-pressed="false"><span class="grade-name">${g.name}</span><span class="grade-note">${g.note}</span><span class="grade-price">from ${money(g.base)}</span></button>`).join('');
-  ui.paintList.innerHTML = CFG.paints.map((p) => `<button type="button" class="swatch" data-paint="${p.id}" aria-pressed="false" aria-label="${p.name}${p.price ? ', plus ' + money(p.price) : ', no cost'}" style="--sw: rgb(${p.rgb.map((c) => Math.round(clamp(c * 1.25, 0, 1) * 255)).join(',')})"></button>`).join('');
-  ui.wheelList.innerHTML = CFG.wheels.map((w) => `<button type="button" class="opt" data-wheels="${w.id}" aria-pressed="false"><span>${w.name}</span><span class="opt-price">${w.price ? '+' + money(w.price) : 'Included'}</span></button>`).join('');
-  ui.extraList.innerHTML = CFG.extras.map((e) => `<label class="extra"><input type="checkbox" data-extra="${e.id}"><span class="extra-name">${e.name}</span><span class="opt-price">+${money(e.price)}</span></label>`).join('');
-  ui.gradeList.addEventListener('click', (e) => { const b = e.target.closest('[data-grade]'); if (b) setState({ grade: b.dataset.grade }); });
-  ui.paintList.addEventListener('click', (e) => { const b = e.target.closest('[data-paint]'); if (b) setState({ paint: b.dataset.paint }); });
-  ui.wheelList.addEventListener('click', (e) => { const b = e.target.closest('[data-wheels]'); if (b) setState({ wheels: b.dataset.wheels }); });
-  ui.extraList.addEventListener('change', (e) => { const c = e.target.closest('[data-extra]'); if (c) toggleExtra(c.dataset.extra); });
-  $('btnSave').addEventListener('click', () => toast('Saving builds is part of the concept. It isn’t wired up yet.'));
-  $('btnShare').addEventListener('click', () => toast('Sharing a build is part of the concept. It isn’t wired up yet.'));
+/* ---------------- build panel (from the XML, or a plain variant list) ---------------- */
+function buildPanelHTML() {
+  const cfg = scene.cfg, g = scene.veh.glb;
+  if (!cfg && !g) return '<p class="muted">Open a vehicle (.glb) and its configuration (.xml) to build it here. Options, colours and accessories come from the XML.</p>';
+  if (!cfg) {
+    let h = '';
+    if (g.variantNames.length) h += `<section><p class="label"><label for="variantSel">Material variant</label><span>${g.variantNames.length}</span></p><select id="variantSel" class="select">${g.variantNames.map((v, i) => `<option value="${i}">${esc(v)}</option>`).join('')}</select></section>`;
+    if (scene.fallback.accNodes.length) h += `<section><p class="label">Accessories <span>from node names</span></p><div class="extras">${scene.fallback.accNodes.map((n) => `<label class="extra"><input type="checkbox" data-acc="${esc(n)}"><span class="extra-name">${esc(accLabel(n))}</span></label>`).join('')}</div></section>`;
+    h += '<p class="note">No configuration XML loaded, so the vehicle’s own variants are listed. Open the XML for grades, colours and accessory rules.</p>';
+    return h;
+  }
+  const names = cfgNames(cfg, scene.sel);
+  let h = '';
+  for (const gr of cfg.groups) {
+    const how = cfgDisplay(gr, names, g), cur = scene.sel.get(gr.name);
+    if (how === 'none') continue;
+    const curOpt = gr.options.find((o) => cur.has(o.name));
+    const key = (o) => `data-g="${esc(gr.name)}" data-o="${esc(o.name)}"`;
+    if (how === 'info') { h += `<p class="info"><span class="label">${esc(gr.title)}</span><span>${esc(curOpt ? curOpt.title : '—')}</span></p>`; continue; }
+    if (how === 'swatch') {
+      h += `<section><p class="label">${esc(gr.title)} <span>${esc(curOpt ? curOpt.title : '')}</span></p><div class="swatches">`;
+      for (const o of gr.options) {
+        const c = cfgSwatch(o, g), ok = cfgAvailable(o, names);
+        const bg = c[1] ? `linear-gradient(180deg, ${c[1]} 0 50%, ${c[0]} 50% 100%)` : c[0];
+        h += `<button type="button" class="swatch" ${key(o)} aria-pressed="${cur.has(o.name)}" ${ok ? '' : 'disabled'} title="${esc(o.title)}${ok ? '' : ' (not available with this build)'}" aria-label="${esc(o.title)}" style="--sw: ${bg}"></button>`;
+      }
+      h += '</div></section>'; continue;
+    }
+    if (how === 'choice') {
+      h += `<section><p class="label">${esc(gr.title)}</p><div class="opts">`;
+      for (const o of gr.options) if (!o.isNone) h += `<button type="button" class="opt" ${key(o)} aria-pressed="${cur.has(o.name)}" ${cfgAvailable(o, names) ? '' : 'disabled'}><span>${esc(o.title)}</span><span class="opt-price">${esc(o.name)}</span></button>`;
+      h += '</div></section>'; continue;
+    }
+    const items = gr.options.filter((o) => !o.isNone);
+    h += `<section><p class="label">${esc(gr.title)} <span>${items.filter((o) => cur.has(o.name)).length} of ${items.length}</span></p><div class="extras">`;
+    for (const o of items) {
+      const ok = cfgAvailable(o, names), excl = o.subs.some((s) => subExclusive(gr, s) && gr.subs.length > 1);
+      h += `<label class="extra${ok ? '' : ' off'}"><input type="checkbox" ${key(o)} ${cur.has(o.name) ? 'checked' : ''} ${ok ? '' : 'disabled'}><span class="extra-name">${esc(o.title)}${excl ? ` <span class="tagx">${esc(o.subs.join(' '))}: one only</span>` : ''}</span><span class="opt-price">${esc(o.name)}</span></label>`;
+    }
+    h += '</div></section>';
+  }
+  return h;
 }
-function syncDom() {
-  for (const b of ui.gradeList.querySelectorAll('[data-grade]')) b.setAttribute('aria-pressed', String(b.dataset.grade === state.grade));
-  for (const b of ui.paintList.querySelectorAll('[data-paint]')) b.setAttribute('aria-pressed', String(b.dataset.paint === state.paint));
-  for (const b of ui.wheelList.querySelectorAll('[data-wheels]')) b.setAttribute('aria-pressed', String(b.dataset.wheels === state.wheels));
-  for (const c of ui.extraList.querySelectorAll('[data-extra]')) c.checked = state.extras.has(c.dataset.extra);
-  const p = byId(CFG.paints, state.paint);
-  ui.paintName.textContent = `${p.name} · ${p.price ? '+' + money(p.price) : 'no cost'}`;
-  ui.price.textContent = money(price());
-  ui.turntable.checked = state.turntable;
-  ui.scanNote.hidden = !model.set || !!model.set.isDemo;
+let buildKey = '';
+function syncBuild() {
+  const cfg = scene.cfg, g = scene.veh.glb;
+  ui.buildTitle.textContent = cfg ? cfg.name : g ? 'Build' : 'Build';
+  const h = buildPanelHTML();
+  if (h !== buildKey) {
+    const scroll = ui.buildBody.parentElement.scrollTop;
+    ui.buildBody.innerHTML = h; buildKey = h;
+    ui.buildBody.parentElement.scrollTop = scroll;
+    const vs = $('variantSel');
+    if (vs) vs.value = String(scene.fallback.variant);
+    for (const c of ui.buildBody.querySelectorAll('[data-acc]')) c.checked = scene.fallback.acc.has(c.dataset.acc);
+  }
+  const hidden = cfg ? cfg.groups.filter((gr) => gr.hidden).map((gr) => gr.options.find((o) => scene.sel.get(gr.name).has(o.name))).filter(Boolean) : [];
+  ui.summary.hidden = !(cfg || (g && g.variantNames.length));
+  ui.sumTitle.textContent = hidden.length ? hidden.map((o) => o.title).join(' · ') : cfg ? cfg.name : 'Variant';
+  const vn = selectedVariantName(), codes = hidden.map((o) => o.name).join(' · ');
+  ui.sumVariant.textContent = [codes, g ? (vn ? 'Variant ' + vn : g.variantNames.length ? 'No matching variant, showing defaults' : '') : 'Load the vehicle .glb to see this build'].filter(Boolean).join('\n');
 }
+ui.buildBody.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-g]');
+  if (b && !b.disabled) chooseOption(b.dataset.g, b.dataset.o);
+});
+ui.buildBody.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.matches('input[data-g]')) { chooseOption(t.dataset.g, t.dataset.o); return; }
+  if (t.matches('input[data-acc]')) { toggleFallbackAcc(t.dataset.acc); return; }
+  if (t.id === 'variantSel') setFallbackVariant(parseInt(t.value, 10));
+});
 
-/* model panel */
-async function loadBuffer(buf, name) {
-  setModelStatus(`Reading <strong>${esc(name)}</strong>…`);
-  await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+/* ---------------- loading ---------------- */
+const kindOf = (name) => { const n = name.toLowerCase(); return /\.(glb)$/.test(n) ? 'veh' : /\.xml$/.test(n) ? 'cfg' : /\.json$/.test(n) ? 'align' : /\.(ply|splat|spz)$/.test(n) ? 'env' : null; };
+async function loadFile(file) {
+  const k = kindOf(file.name);
+  if (k === 'veh') return loadVehicle(await file.arrayBuffer(), file.name);
+  if (k === 'cfg') return loadConfig(await file.text(), file.name);
+  if (k === 'align') { try { applyAlign(JSON.parse(await file.text())); toast('Alignment loaded.'); } catch (e) { toast('That alignment file couldn’t be read.'); } return; }
+  if (k === 'env') return loadEnv(await file.arrayBuffer(), file.name);
+  toast(`${file.name} isn’t a splat, .glb, .xml or alignment .json file.`);
+}
+async function loadEnv(buf, name) {
+  ui.envStatus.innerHTML = `Reading <strong>${esc(name)}</strong>…`;
+  await nextFrame();
   try {
     const t0 = performance.now();
     const S = await parseSplatFile(buf, name);
-    useSet(S, true);
-    setModelStatus(`Loaded <strong>${esc(name)}</strong> in ${((performance.now() - t0) / 1000).toFixed(1)} s. If it’s sideways or upside down, use the orientation buttons.`);
-  } catch (e) {
-    setModelStatus(`<strong>Couldn’t open ${esc(name)}.</strong> ${esc(e && e.message ? e.message : String(e))}`);
+    uploadSplats(S);
+    const e = scene.env;
+    Object.assign(e, { set: S, name, rot: M4.ident(), pos: [0, 0, 0], yaw: 0, scale: 1, crop: 0 });
+    centreEnv();
+    restoreAlign('env');
+    if (!scene.veh.glb) opts.target = 'env';
+    ui.envName.textContent = name; ui.envClear.hidden = false;
+    ui.envStatus.innerHTML = `Loaded ${S.n.toLocaleString('en-AU')} splats in ${((performance.now() - t0) / 1000).toFixed(1)} s. Use <strong>Align → Environment</strong> to scale and place it around the vehicle.`;
+    if (!scene.veh.glb) resetView();
+    afterSceneChange();
+  } catch (err) {
+    ui.envStatus.innerHTML = `<strong>Couldn’t open ${esc(name)}.</strong> ${esc(err && err.message ? err.message : String(err))}`;
   }
 }
-function useSet(S, autoFit) {
-  model.set = S; model.rot = M4.ident(); model.userScale = 1; model.crop = 0; model.floorCut = -1e9;
-  ui.scale.value = '0'; ui.crop.value = '0'; ui.floor.value = '0';
-  computeFit(autoFit);
-  uploadSplats(S);
-  resetView();
-  ui.modelName.textContent = S.isDemo ? 'Demo ute (built from splats)' : S.name;
-  ui.btnDemo.hidden = !!S.isDemo;
-  updateSliders(); syncDom(); updateStats();
-  if (xr) placeAll();
+async function loadVehicle(buf, name) {
+  ui.vehStatus.innerHTML = `Reading <strong>${esc(name)}</strong> (${(buf.byteLength / 1048576).toFixed(0)} MB)…`;
+  await nextFrame();
+  try {
+    const t0 = performance.now();
+    const g = await parseGLB(buf, name, (msg) => { ui.vehStatus.textContent = msg; });
+    freeGLB(scene.veh.glb);
+    Object.assign(scene.veh, { glb: g, name, pos: [0, 0, 0], yaw: 0, scale: 1 });
+    scene.fallback = { variant: g.variantNames.length ? 0 : -1, acc: new Set(), accNodes: findAccessoryNodes(g) };
+    restoreAlign('veh');
+    opts.target = 'veh';
+    applyConfig();
+    ui.vehName.textContent = name; ui.vehClear.hidden = false;
+    const b = vehBox();
+    const notes = [`${fmtN(g.tris)} triangles`, `${g.variantNames.length} variants`, `${Math.round(g.texMB)} MB of textures`];
+    ui.vehStatus.innerHTML = `Loaded in ${((performance.now() - t0) / 1000).toFixed(1)} s · ${notes.join(' · ')} · ${fmtLen(b.len)} long.` + (g.failedImages ? ` ${g.failedImages} image(s) couldn’t be decoded.` : '');
+    resetView();
+    afterSceneChange();
+  } catch (err) {
+    ui.vehStatus.innerHTML = `<strong>Couldn’t open ${esc(name)}.</strong> ${esc(err && err.message ? err.message : String(err))}`;
+  }
 }
-ui.file.addEventListener('change', async () => { const f = ui.file.files[0]; if (f) await loadBuffer(await f.arrayBuffer(), f.name); ui.file.value = ''; });
+function loadConfig(text, name) {
+  try {
+    const cfg = parseConfigXML(text, name);
+    scene.cfg = cfg; scene.sel = cfgDefaults(cfg);
+    ui.cfgName.textContent = name; ui.cfgClear.hidden = false;
+    const shown = cfg.groups.filter((g) => !g.hidden).length;
+    ui.cfgStatus.innerHTML = `${esc(cfg.name)}: ${cfg.groups.length} option groups (${shown} shown).`;
+    applyConfig();
+    afterSceneChange();
+  } catch (err) {
+    ui.cfgStatus.innerHTML = `<strong>Couldn’t read ${esc(name)}.</strong> ${esc(err && err.message ? err.message : String(err))}`;
+  }
+}
+function afterSceneChange() { syncAlign(); syncBuild(); updateStats(); panel.dirty = true; if (xr) placeAll(); }
+for (const inp of [ui.envFile, ui.vehFile, ui.cfgFile, $('alignFile')]) inp.addEventListener('change', async () => { for (const f of [...inp.files]) await loadFile(f); inp.value = ''; });
 ui.urlForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = ui.url.value.trim();
   if (!url) return;
-  const name = decodeURIComponent(url.split('?')[0].split('/').pop() || 'scan');
-  setModelStatus(`Downloading <strong>${esc(name)}</strong>…`);
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('The server answered ' + res.status + '.');
-    await loadBuffer(await res.arrayBuffer(), name);
-  } catch (err) {
-    setModelStatus(`<strong>Couldn’t download that link.</strong> The site may not allow it, and the preview window can’t fetch other sites. Download the file and use Open splat file instead.`);
-  }
+  const name = decodeURIComponent(url.split('?')[0].split('/').pop() || 'file');
+  ui.envStatus.innerHTML = `Downloading <strong>${esc(name)}</strong>…`;
+  let res;
+  try { res = await fetch(url); if (!res.ok) throw new Error('The server answered ' + res.status + '.'); }
+  catch (err) { ui.envStatus.innerHTML = '<strong>Couldn’t download that link.</strong> The site may not allow it, and the preview window can’t fetch other sites. Download the file and open it instead.'; return; }
+  const k = kindOf(name) || 'env';
+  if (k === 'veh') await loadVehicle(await res.arrayBuffer(), name);
+  else if (k === 'cfg') loadConfig(await res.text(), name);
+  else await loadEnv(await res.arrayBuffer(), name);
 });
-ui.btnDemo.addEventListener('click', () => { useSet(buildDemoUte(), false); setModelStatus('Showing the demo ute.'); });
-const rotate = (m) => { model.rot = M4.mul(m, model.rot); computeFit(false); resetView(); if (xr) placeAll(); updateStats(); };
-$('rotX').addEventListener('click', () => rotate(M4.rotX(Math.PI / 2)));
-$('rotY').addEventListener('click', () => rotate(M4.rotY(Math.PI / 2)));
-$('rotZ').addEventListener('click', () => rotate(M4.rotZ(Math.PI / 2)));
-$('flip').addEventListener('click', () => rotate(M4.rotX(Math.PI)));
-$('btnFit').addEventListener('click', () => { model.fit = 5.3 / model.rawLen; model.userScale = 1; ui.scale.value = '0'; updateDims(); updateSliders(); resetView(); updateStats(); });
-$('btnReset').addEventListener('click', () => resetView());
-ui.turntable.addEventListener('change', () => setState({ turntable: ui.turntable.checked }));
-ui.scale.addEventListener('input', () => { model.userScale = Math.pow(2, parseFloat(ui.scale.value)); updateDims(); updateSliders(); updateStats(); });
-ui.scale.addEventListener('change', () => resetView());
-ui.crop.addEventListener('input', () => { const v = parseFloat(ui.crop.value); model.crop = v <= 0 ? 0 : v; updateSliders(); });
-ui.floor.addEventListener('input', () => { const v = parseFloat(ui.floor.value); model.floorCut = v <= 0 ? -1e9 : v; updateSliders(); });
-function updateSliders() {
-  ui.scaleOut.textContent = '×' + (model.fit * model.userScale).toFixed(2);
-  ui.cropOut.textContent = model.crop > 0 ? model.crop.toFixed(1) + ' m' : 'Off';
-  ui.floorOut.textContent = model.floorCut > -1e8 ? Math.round(model.floorCut * 100) + ' cm' : 'Off';
-}
-// drag and drop anywhere
+ui.envClear.addEventListener('click', () => {
+  scene.env.set = null; scene.env.name = ''; GPU.n = GPU.drawN = 0;
+  ui.envName.textContent = 'None loaded'; ui.envStatus.textContent = ''; ui.envClear.hidden = true;
+  if (opts.target === 'env') opts.target = 'veh';
+  afterSceneChange();
+});
+ui.vehClear.addEventListener('click', () => {
+  freeGLB(scene.veh.glb); scene.veh.glb = null; scene.veh.name = '';
+  ui.vehName.textContent = 'None loaded'; ui.vehStatus.textContent = ''; ui.vehClear.hidden = true;
+  afterSceneChange();
+});
+ui.cfgClear.addEventListener('click', () => {
+  scene.cfg = null; scene.sel = null;
+  ui.cfgName.textContent = 'None loaded'; ui.cfgStatus.textContent = ''; ui.cfgClear.hidden = true;
+  applyConfig(); afterSceneChange();
+});
+// drag and drop anywhere (several files at once)
 let dragDepth = 0;
 window.addEventListener('dragenter', (e) => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { dragDepth++; ui.drop.hidden = false; } });
 window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) ui.drop.hidden = true; });
 window.addEventListener('dragover', (e) => e.preventDefault());
-window.addEventListener('drop', async (e) => { e.preventDefault(); dragDepth = 0; ui.drop.hidden = true; const f = e.dataTransfer?.files?.[0]; if (f) await loadBuffer(await f.arrayBuffer(), f.name); });
+window.addEventListener('drop', async (e) => {
+  e.preventDefault(); dragDepth = 0; ui.drop.hidden = true;
+  const files = [...(e.dataTransfer?.files || [])];
+  const order = { cfg: 0, veh: 1, env: 2, align: 3 };
+  files.sort((a, b) => (order[kindOf(a.name)] ?? 9) - (order[kindOf(b.name)] ?? 9));
+  for (const f of files) await loadFile(f);
+});
+
+/* ---------------- alignment fields, persistence ---------------- */
+const ALIGN_PREFIX = 'splatconfig.align.';
+const store = {
+  get(k) { try { const v = localStorage.getItem(ALIGN_PREFIX + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(ALIGN_PREFIX + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+};
+const r4 = (v) => Math.round(v * 1e4) / 1e4;
+function alignState() {
+  const e = scene.env, v = scene.veh;
+  return {
+    environment: e.set ? { file: e.name, position: e.pos.map(r4), turnDegrees: r4((e.yaw * 180) / Math.PI), scale: +e.scale.toPrecision(7), orientation: Array.from(e.rot).map((x) => Math.round(x)), centreOffset: e.offset.map((x) => +x.toPrecision(7)), trimRadius: r4(e.crop) } : null,
+    vehicle: v.glb ? { file: v.name, position: v.pos.map(r4), turnDegrees: r4((v.yaw * 180) / Math.PI), scale: +v.scale.toPrecision(7) } : null,
+  };
+}
+function applyAlign(a, only) {
+  const num = (x, d) => (typeof x === 'number' && isFinite(x) ? x : d);
+  const v3 = (x, d) => (Array.isArray(x) && x.length === 3 && x.every((n) => typeof n === 'number' && isFinite(n)) ? x.slice() : d);
+  if (a && a.environment && scene.env.set && only !== 'veh') {
+    const s = a.environment, e = scene.env;
+    e.pos = v3(s.position, e.pos); e.yaw = (num(s.turnDegrees, (e.yaw * 180) / Math.PI) * Math.PI) / 180;
+    e.scale = clamp(num(s.scale, e.scale), SCALE_MIN, SCALE_MAX); e.crop = Math.max(0, num(s.trimRadius, 0));
+    if (Array.isArray(s.orientation) && s.orientation.length === 16) { e.rot = new Float32Array(s.orientation); centreEnv(); }
+    if (v3(s.centreOffset, null)) e.offset = s.centreOffset.slice();
+  }
+  if (a && a.vehicle && scene.veh.glb && only !== 'env') {
+    const s = a.vehicle, v = scene.veh;
+    v.pos = v3(s.position, v.pos); v.yaw = (num(s.turnDegrees, (v.yaw * 180) / Math.PI) * Math.PI) / 180;
+    v.scale = clamp(num(s.scale, v.scale), SCALE_MIN, SCALE_MAX);
+  }
+  alignChanged();
+}
+// restore the last alignment used with this environment / vehicle (pair first, then each on its own)
+function restoreAlign(which) {
+  const pair = scene.env.set && scene.veh.glb ? store.get('pair:' + scene.env.name + '|' + scene.veh.name) : null;
+  const own = which === 'env' ? store.get('env:' + scene.env.name) : store.get('veh:' + scene.veh.name);
+  const a = pair || own;
+  if (a) { applyAlign(a, pair ? null : which); toast('Restored the saved alignment.'); }
+}
+let saveT = 0;
+function saveAlign() {
+  const a = alignState();
+  if (a.environment) store.set('env:' + scene.env.name, { environment: a.environment });
+  if (a.vehicle) store.set('veh:' + scene.veh.name, { vehicle: a.vehicle });
+  if (a.environment && a.vehicle) store.set('pair:' + scene.env.name + '|' + scene.veh.name, a);
+}
+function alignChanged(fromHands) {
+  clearTimeout(saveT); saveT = setTimeout(saveAlign, 400);
+  if (!fromHands || !xr) syncAlign();
+}
+function syncAlign() {
+  for (const b of document.querySelectorAll('[data-target]')) {
+    b.setAttribute('aria-pressed', String(b.dataset.target === opts.target));
+    b.disabled = !alignObj(b.dataset.target);
+  }
+  const o = alignObj(opts.target);
+  const isEnv = opts.target === 'env';
+  for (const el of document.querySelectorAll('.align .fields input, .align .scale-row input, .align > .btn-row .btn, .align select')) el.disabled = !o;
+  for (const el of document.querySelectorAll('.env-only')) el.hidden = !isEnv;
+  const act = document.activeElement;
+  const put = (el, v) => { if (el !== act) el.value = v; };
+  if (o) {
+    put(ui.fX, r4(o.pos[0])); put(ui.fY, r4(o.pos[1])); put(ui.fZ, r4(o.pos[2]));
+    put(ui.fYaw, r4((((o.yaw * 180) / Math.PI) % 360 + 540) % 360 - 180));
+    put(ui.fScale, fmtScale(o.scale));
+    if (ui.scale !== act) ui.scale.value = String(clamp(Math.log10(o.scale), -4, 4));
+    const size = isEnv ? scene.env.across * o.scale : (vehBox() || {}).len;
+    ui.sizeOut.textContent = size ? (isEnv ? '≈ ' + fmtLen(size) + ' across' : fmtLen(size) + ' long') : '';
+  } else {
+    for (const el of [ui.fX, ui.fY, ui.fZ, ui.fYaw, ui.fScale]) el.value = '';
+    ui.sizeOut.textContent = isEnv ? 'No environment loaded' : 'No vehicle loaded';
+  }
+  const c = scene.env.crop;
+  put(ui.cropIn, c ? r4(c) : 0);
+  if (ui.crop !== act) ui.crop.value = c > 0 ? String(clamp(Math.log10(c / 0.1) / 6, 0, 1)) : '0';
+  ui.cropOut.textContent = c > 0 ? fmtLen(c) : 'Off';
+  ui.grid.checked = opts.grid; ui.shadow.checked = opts.shadow;
+  if (ui.alignText !== act) ui.alignText.value = JSON.stringify(alignState(), null, 1);
+  panel.dirty = true;
+}
+for (const b of document.querySelectorAll('[data-target]')) b.addEventListener('click', () => { opts.target = b.dataset.target; if (alignObj(opts.target)) opts.xrTarget = opts.target; syncAlign(); });
+const fieldNum = (el) => { const v = parseFloat(el.value); return isFinite(v) ? v : null; };
+for (const [el, set] of [
+  [ui.fX, (o, v) => { o.pos[0] = v; }], [ui.fY, (o, v) => { o.pos[1] = v; }], [ui.fZ, (o, v) => { o.pos[2] = v; }],
+  [ui.fYaw, (o, v) => { o.yaw = (v * Math.PI) / 180; }], [ui.fScale, (o, v) => { if (v > 0) o.scale = clamp(v, SCALE_MIN, SCALE_MAX); }],
+]) {
+  el.addEventListener('input', () => { const o = alignObj(opts.target), v = fieldNum(el); if (o && v !== null) { set(o, v); alignChanged(); } });
+  el.addEventListener('change', () => syncAlign());
+}
+ui.scale.addEventListener('input', () => { const o = alignObj(opts.target); if (o) { o.scale = Math.pow(10, parseFloat(ui.scale.value)); alignChanged(); } });
+for (const b of document.querySelectorAll('[data-mul]')) b.addEventListener('click', () => { const o = alignObj(opts.target); if (o) { o.scale = clamp(o.scale * parseFloat(b.dataset.mul), SCALE_MIN, SCALE_MAX); alignChanged(); } });
+ui.step.addEventListener('change', () => { opts.step = parseFloat(ui.step.value); for (const el of [ui.fX, ui.fY, ui.fZ]) el.step = String(opts.step); });
+ui.crop.addEventListener('input', () => { const v = parseFloat(ui.crop.value); scene.env.crop = v <= 0 ? 0 : 0.1 * Math.pow(10, v * 6); alignChanged(); });
+ui.cropIn.addEventListener('input', () => { const v = fieldNum(ui.cropIn); if (v !== null && v >= 0) { scene.env.crop = v; alignChanged(); } });
+const rotateEnv = (m) => { if (!scene.env.set) return; scene.env.rot = M4.mul(m, scene.env.rot); centreEnv(); alignChanged(); };
+$('rotX').addEventListener('click', () => rotateEnv(M4.rotX(Math.PI / 2)));
+$('rotY').addEventListener('click', () => rotateEnv(M4.rotY(Math.PI / 2)));
+$('rotZ').addEventListener('click', () => rotateEnv(M4.rotZ(Math.PI / 2)));
+$('flip').addEventListener('click', () => rotateEnv(M4.rotX(Math.PI)));
+$('btnCentre').addEventListener('click', () => {
+  if (opts.target === 'env' && scene.env.set) { centreEnv(); scene.env.pos = [0, 0, 0]; }
+  else if (scene.veh.glb) { const b = vehBox(); scene.veh.pos = vsub(scene.veh.pos, [b.c[0], b.min[1], b.c[2]]); }
+  alignChanged();
+});
+$('btnAlignReset').addEventListener('click', () => {
+  const o = alignObj(opts.target);
+  if (!o) return;
+  o.pos = [0, 0, 0]; o.yaw = 0; o.scale = 1;
+  if (opts.target === 'env') { scene.env.rot = M4.ident(); scene.env.crop = 0; centreEnv(); }
+  alignChanged();
+});
+$('alignApply').addEventListener('click', () => { try { applyAlign(JSON.parse(ui.alignText.value)); toast('Alignment applied.'); } catch (e) { toast('That text isn’t valid alignment JSON.'); } });
+$('alignSave').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(alignState(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'alignment.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+ui.grid.addEventListener('change', () => { opts.grid = ui.grid.checked; panel.dirty = true; });
+ui.shadow.addEventListener('change', () => { opts.shadow = ui.shadow.checked; });
+ui.exp.addEventListener('input', () => { opts.exposure = Math.pow(2, parseFloat(ui.exp.value)); ui.expOut.textContent = opts.exposure.toFixed(2); });
+$('btnReset').addEventListener('click', () => resetView());
+$('btnFrameEnv').addEventListener('click', () => {
+  if (!scene.env.set) { resetView(); return; }
+  const s = scene.env.across * scene.env.scale, p = scene.env.pos;
+  cam.target = [p[0], p[1] + s * 0.05, p[2]]; cam.pitch = 0.5; cam.dist = clamp(s * 1.1, 0.3, 50000);
+});
 
 // narrow screens: panels become tabs
 for (const b of document.querySelectorAll('[data-sheet]')) b.addEventListener('click', () => {
@@ -1640,7 +2508,7 @@ for (const b of document.querySelectorAll('[data-sheet]')) b.addEventListener('c
 let resizeT = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!xr) resetView(); }, 150); });
 
-/* glasses */
+/* ---------------- glasses ---------------- */
 ui.btnXR.addEventListener('click', startXR);
 const MSG_FRAMED = '<strong>The glasses view can’t start inside this preview.</strong> Open the standalone file in Chrome on the XREAL Aura.';
 async function detectXR() {
@@ -1654,35 +2522,32 @@ async function detectXR() {
   if (ar || vr) {
     xrMode = ar ? 'immersive-ar' : 'immersive-vr';
     ui.btnXR.hidden = false;
-    setXRStatus(`<strong>Glasses ready.</strong> The ute appears life-size a couple of metres in front of you, with the build panel on your left.`);
+    setXRStatus('<strong>Glasses ready.</strong> The vehicle appears life-size a couple of metres in front of you, with the build panel on your left.');
   } else setXRStatus(framed ? MSG_FRAMED : 'No glasses found here. Open this page in Chrome on the XREAL Aura to see it in your room.');
 }
 
-/* boot */
+/* ---------------- boot ---------------- */
 function boot() {
-  if (!gl) { setModelStatus('<strong>This browser can’t draw 3D graphics (WebGL2 is off).</strong> Try an up-to-date Chrome.'); return; }
+  if (!gl) { ui.envStatus.innerHTML = '<strong>This browser can’t draw 3D graphics (WebGL2 is off).</strong> Try an up-to-date Chrome.'; return; }
   try {
     GPU.maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     buildPrograms();
-    discVAO = quadVAO(); panelVAO = quadVAO();
+    quadVAOs = { shadow: quadVAO(), grid: quadVAO(), panel: quadVAO() };
     lineVAO = gl.createVertexArray(); gl.bindVertexArray(lineVAO);
     lineBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
     initSorter();
-    buildDom();
-    const t0 = performance.now();
-    useSet(buildDemoUte(), false);
-    window.__demoMs = performance.now() - t0;
-    setModelStatus('Showing the demo ute.');
   } catch (e) {
-    setModelStatus('<strong>The viewer couldn’t start.</strong> ' + esc(e && e.message ? e.message : String(e)));
+    ui.envStatus.innerHTML = '<strong>The viewer couldn’t start.</strong> ' + esc(e && e.message ? e.message : String(e));
     throw e;
   }
+  try { if (window.self !== window.top) $('alignSave').hidden = true; } catch (e) { $('alignSave').hidden = true; } // downloads only work in the standalone file
+  syncBuild(); syncAlign(); resetView();
   startLoop();
   detectXR();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { panel.dirty = true; });
 }
-window.__viewer = { model, stage, state, cam, GPU, sorter, panel, head, loadBuffer, get xr() { return xr; }, paintPanel, buttonAt, CFG };
+window.__viewer = { scene, stage, opts, cam, GPU, sorter, panel, head, loadEnv, loadVehicle, loadConfig, applyAlign, alignState, get xr() { return xr; }, paintPanel, buttonAt, chooseOption };
 boot();
 
 })();
