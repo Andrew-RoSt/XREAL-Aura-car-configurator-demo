@@ -177,6 +177,7 @@
     .tag { display: none; }
   }
   /* ---------- alignment + build additions ---------- */
+  .hdri-ctl { display: flex; flex-direction: column; gap: 0.5rem; }
   .slot { border-bottom: 1px solid var(--line); padding-bottom: 0.95rem; }
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
   .seg .btn[aria-pressed="true"] { border-color: var(--sand); color: var(--sand); background: rgba(201, 180, 138, 0.12); }
@@ -238,6 +239,27 @@
       <button class="btn" type="submit">Load</button>
     </form>
     <p class="status" id="envStatus" role="status"></p>
+  </section>
+
+  <section class="slot">
+    <p class="label">Backdrop <span>HDRI · .hdr .jpg .png</span></p>
+    <p class="model-name" id="hdriName">None loaded</p>
+    <div class="btn-row">
+      <label class="btn" for="hdriFile">Open HDRI</label>
+      <input type="file" id="hdriFile" accept=".hdr,.jpg,.jpeg,.png,.webp,image/*" hidden>
+      <button class="btn" id="hdriClear" type="button" hidden>Remove</button>
+    </div>
+    <div class="hdri-ctl" id="hdriCtl" hidden>
+      <label class="check"><input type="checkbox" id="hdriShow" checked> Show as backdrop</label>
+      <label class="check"><input type="checkbox" id="hdriLight" checked> Light and reflect the vehicle with it</label>
+      <p class="label"><label for="hdriRot">Rotation</label><output id="hdriRotOut">0°</output></p>
+      <input type="range" id="hdriRot" min="0" max="360" step="1" value="0">
+      <p class="label"><label for="hdriInt">Brightness</label><output id="hdriIntOut">1.00</output></p>
+      <input type="range" id="hdriInt" min="-4" max="3" step="0.05" value="0">
+      <p class="label"><label for="hdriBlur">Backdrop blur</label><output id="hdriBlurOut">Sharp</output></p>
+      <input type="range" id="hdriBlur" min="0" max="6" step="0.1" value="0">
+    </div>
+    <p class="status" id="hdriStatus" role="status"></p>
   </section>
 
   <section class="slot">
@@ -325,6 +347,8 @@
 
   <section>
     <p class="label">View</p>
+    <label class="check"><input type="checkbox" id="showCarChk" checked> Show vehicle</label>
+    <label class="check"><input type="checkbox" id="showSplatChk" checked> Show environment splat</label>
     <label class="check"><input type="checkbox" id="gridChk" checked> Ground grid</label>
     <label class="check"><input type="checkbox" id="shadowChk" checked> Contact shadow</label>
     <p class="label"><label for="expRange">Vehicle brightness</label><output id="expOut">1.00</output></p>
@@ -352,7 +376,7 @@
   <button class="btn" type="button" data-sheet="scene" aria-pressed="false">Scene</button>
   <button class="btn" type="button" data-sheet="build" aria-pressed="false">Build</button>
 </nav>
-<div class="drop" id="drop" hidden>Drop splat, GLB, XML or alignment files</div>
+<div class="drop" id="drop" hidden>Drop splat, GLB, XML, HDRI or alignment files</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -660,7 +684,7 @@ function compile(vs, fs) {
   return { p, u };
 }
 
-const R = { splat: null, shadow: null, grid: null, pbr: null, panel: null, line: null };
+const R = { backdrop: null, splat: null, shadow: null, grid: null, pbr: null, panel: null, line: null };
 function buildPrograms() {
   // Each splat is an instanced quad. The 3D covariance comes from scale + rotation, is projected with the
   // perspective Jacobian into a 2D ellipse, and the quad is stretched along the ellipse's axes.
@@ -778,14 +802,21 @@ void main() {
 }`, `#version 300 es
 precision highp float;
 layout(std140) uniform Mat { vec4 mBase; vec4 mEmisCut; vec4 mPBR; vec4 mCoat; vec4 mFlags; vec4 mFlags2; vec4 mTT[10]; };
-uniform sampler2D t0, t1, t2, t3, t4;
+uniform sampler2D t0, t1, t2, t3, t4, tEnv;
+uniform int uUseEnv; uniform vec2 uEnvRot; uniform float uEnvLod; uniform float uEnvInt; uniform float uDirect; uniform float uAmbK;
 uniform vec3 uCam; uniform vec3 uSkyTop; uniform vec3 uSkyHor; uniform vec3 uGround;
 uniform float uExposure; uniform int uHasN;
 in vec3 vPos; in vec3 vN; in vec2 vUV0; in vec2 vUV1; in vec4 vCol;
 out vec4 o;
 const float PI = 3.14159265;
 vec2 tuv(int k) { vec4 r0 = mTT[k * 2], r1 = mTT[k * 2 + 1]; vec3 h = vec3(r0.w > 0.5 ? vUV1 : vUV0, 1.0); return vec2(dot(r0.xyz, h), dot(r1.xyz, h)); }
+vec3 equi(sampler2D t, vec3 d, vec2 rot, float lod) {
+  d = vec3(rot.x * d.x - rot.y * d.z, d.y, rot.y * d.x + rot.x * d.z);
+  vec2 uv = vec2(atan(d.x, -d.z) * 0.15915494 + 0.5, acos(clamp(d.y, -1.0, 1.0)) * 0.31830989);
+  return textureLod(t, uv, lod).rgb;
+}
 vec3 env(vec3 d, float r) {
+  if (uUseEnv == 1) return equi(tEnv, normalize(d), uEnvRot, (uEnvLod - 3.0) * pow(r, 0.6)) * uEnvInt;
   float y = d.y, soft = 0.04 + r * 0.7;
   vec3 c = mix(uGround, uSkyHor, smoothstep(-soft, soft * 0.5, y));
   c = mix(c, uSkyTop, smoothstep(0.15, 1.0, y));
@@ -846,8 +877,8 @@ void main() {
     float NoV = clamp(dot(N, V), 1e-4, 1.0);
     vec3 F0 = mix(vec3(mCoat.z), base.rgb, metal), diff = base.rgb * (1.0 - metal);
     vec3 key = normalize(vec3(0.35, 0.9, 0.3)), fill = normalize(vec3(-0.6, 0.35, -0.55));
-    vec3 c = light(N, V, key, vec3(2.0, 1.95, 1.85), diff, F0, rough) + light(N, V, fill, vec3(0.45, 0.5, 0.6), diff, F0, rough);
-    c += diff * env(N, 1.0) * 0.45 * ao;
+    vec3 c = (light(N, V, key, vec3(2.0, 1.95, 1.85), diff, F0, rough) + light(N, V, fill, vec3(0.45, 0.5, 0.6), diff, F0, rough)) * uDirect;
+    c += diff * env(N, 1.0) * uAmbK * ao;
     vec3 spec = env(reflect(-V, N), rough) * envBRDF(F0, rough, NoV) * ao;
     vec3 dif = c;
     if (mCoat.x > 0.0 && mCoat.w < 1.5) {
@@ -861,6 +892,24 @@ void main() {
   col *= uExposure;
   col = clamp((col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14), 0.0, 1.0);
   o = vec4(pow(col, vec3(1.0 / 2.2)), a);
+}`);
+  R.backdrop = compile(`#version 300 es
+layout(location=0) in vec2 aCorner;
+uniform mat4 uInvVP;
+out vec4 vH;
+void main() { vH = uInvVP * vec4(aCorner, -1.0, 1.0); gl_Position = vec4(aCorner, 0.0, 1.0); }`, `#version 300 es
+precision highp float;
+in vec4 vH; uniform sampler2D uEnv; uniform vec2 uRot; uniform float uLod; uniform float uIntensity;
+out vec4 o;
+vec3 equi(sampler2D t, vec3 d, vec2 rot, float lod) {
+  d = vec3(rot.x * d.x - rot.y * d.z, d.y, rot.y * d.x + rot.x * d.z);
+  vec2 uv = vec2(atan(d.x, -d.z) * 0.15915494 + 0.5, acos(clamp(d.y, -1.0, 1.0)) * 0.31830989);
+  return textureLod(t, uv, lod).rgb;
+}
+void main() {
+  vec3 c = equi(uEnv, normalize(vH.xyz / vH.w), uRot, uLod) * uIntensity;
+  c = clamp((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14), 0.0, 1.0);
+  o = vec4(pow(c, vec3(1.0 / 2.2)), 1.0);
 }`);
   gl.uniformBlockBinding(R.pbr.p, gl.getUniformBlockIndex(R.pbr.p, 'Mat'), 0);
   const mk = (px) => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(px)); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); return t; };
@@ -969,6 +1018,127 @@ function uploadSplats(S) {
   GPU.n = S.n; GPU.drawN = S.n;
   sorter.gen++; sorter.last = null; sorter.pending = null; sorter.busy = false;
   sorter.worker.postMessage({ type: 'init', pos: S.pos.slice(), n: S.n });
+}
+
+/* ---------------- HDRI backdrop + image-based lighting ----------------
+   Equirectangular .hdr (Radiance RGBE) or ordinary .jpg/.png/.webp panoramas. Pixels become linear floats,
+   are shrunk to at most 2048 px wide, and every mip level is built here on the CPU so the half-float
+   texture never has to be rendered to (which some mobile GPUs can't do). Rough reflections and diffuse
+   light read blurrier mip levels. */
+const HDRI_MAX_W = 2048;
+const hdri = { tex: null, name: '', w: 0, h: 0, levels: 1, show: true, light: true, rot: 0, intensity: 1, blur: 0 };
+
+function parseRadianceHDR(buf) {
+  const u = new Uint8Array(buf);
+  let p = 0;
+  const line = () => { let s = ''; while (p < u.length && u[p] !== 10) s += String.fromCharCode(u[p++]); p++; return s; };
+  const first = line();
+  if (!/^#\?(RADIANCE|RGBE)/.test(first)) throw new Error('This .hdr file doesn’t start with a Radiance header.');
+  for (;;) { const l = line(); if (p >= u.length) throw new Error('The .hdr header never ends.'); if (l === '') break; if (/^FORMAT=/.test(l) && !/32-bit_rle_rgbe/.test(l)) throw new Error('Only RGBE .hdr files are supported (not XYZE).'); }
+  const res = line().trim().split(/\s+/);
+  if (res.length !== 4 || res[0] !== '-Y' || res[2] !== '+X') throw new Error('Unusual .hdr orientation (' + res.join(' ') + ').');
+  const h = parseInt(res[1], 10), w = parseInt(res[3], 10);
+  const out = new Float32Array(w * h * 3), scan = new Uint8Array(w * 4);
+  for (let y = 0; y < h; y++) {
+    if (w >= 8 && w < 32768 && u[p] === 2 && u[p + 1] === 2 && ((u[p + 2] << 8) | u[p + 3]) === w) {
+      p += 4; // new-style run-length encoding: each channel separately
+      for (let c = 0; c < 4; c++) {
+        let x = 0;
+        while (x < w) {
+          let n = u[p++];
+          if (n > 128) { n -= 128; const v = u[p++]; while (n--) scan[(x++) * 4 + c] = v; }
+          else while (n--) scan[(x++) * 4 + c] = u[p++];
+        }
+      }
+    } else { // flat (or old RLE, read as flat)
+      for (let x = 0; x < w; x++) { scan[x * 4] = u[p++]; scan[x * 4 + 1] = u[p++]; scan[x * 4 + 2] = u[p++]; scan[x * 4 + 3] = u[p++]; }
+    }
+    for (let x = 0; x < w; x++) {
+      const e = scan[x * 4 + 3], o = (y * w + x) * 3;
+      if (!e) { out[o] = out[o + 1] = out[o + 2] = 0; continue; }
+      const f = Math.pow(2, e - 136);
+      out[o] = scan[x * 4] * f; out[o + 1] = scan[x * 4 + 1] * f; out[o + 2] = scan[x * 4 + 2] * f;
+    }
+  }
+  return { w, h, rgb: out };
+}
+async function decodeLDRPanorama(buf, name) {
+  const bmp = await createImageBitmap(new Blob([buf]), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+  const k = Math.min(1, HDRI_MAX_W / bmp.width), w = Math.max(2, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const x = cv.getContext('2d'); x.drawImage(bmp, 0, 0, w, h); bmp.close();
+  const px = x.getImageData(0, 0, w, h).data, lut = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { const c = i / 255; lut[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  const rgb = new Float32Array(w * h * 3);
+  for (let i = 0, j = 0; i < w * h; i++, j += 4) {
+    // lift near-white pixels a little so a plain photo still gives the paint some highlights
+    const m = Math.max(px[j], px[j + 1], px[j + 2]) / 255, boost = m > 0.92 ? 1 + (m - 0.92) * 40 : 1;
+    rgb[i * 3] = lut[px[j]] * boost; rgb[i * 3 + 1] = lut[px[j + 1]] * boost; rgb[i * 3 + 2] = lut[px[j + 2]] * boost;
+  }
+  return { w, h, rgb };
+}
+// halve until 1 px; returns RGBA float levels
+function buildHDRIMips(img) {
+  let { w, h, rgb } = img;
+  while (w > HDRI_MAX_W) { // box-shrink oversized panoramas first
+    const nw = Math.max(1, w >> 1), nh = Math.max(1, h >> 1), o = new Float32Array(nw * nh * 3);
+    for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) for (let c = 0; c < 3; c++) {
+      const a = (y * 2 * w + x * 2) * 3 + c, b = a + w * 3;
+      o[(y * nw + x) * 3 + c] = (rgb[a] + rgb[a + 3] + rgb[b] + rgb[b + 3]) * 0.25;
+    }
+    w = nw; h = nh; rgb = o;
+  }
+  const levels = [];
+  let cw = w, ch = h, cur = rgb;
+  for (;;) {
+    const rgba = new Float32Array(cw * ch * 4);
+    for (let i = 0; i < cw * ch; i++) { rgba[i * 4] = Math.min(cur[i * 3], 60000); rgba[i * 4 + 1] = Math.min(cur[i * 3 + 1], 60000); rgba[i * 4 + 2] = Math.min(cur[i * 3 + 2], 60000); rgba[i * 4 + 3] = 1; }
+    levels.push({ w: cw, h: ch, data: rgba });
+    if (cw === 1 && ch === 1) break;
+    const nw = Math.max(1, cw >> 1), nh = Math.max(1, ch >> 1), o = new Float32Array(nw * nh * 3);
+    for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
+      const x0 = Math.min(cw - 1, x * 2), x1 = Math.min(cw - 1, x * 2 + 1), y0 = Math.min(ch - 1, y * 2), y1 = Math.min(ch - 1, y * 2 + 1);
+      for (let c = 0; c < 3; c++) o[(y * nw + x) * 3 + c] = (cur[(y0 * cw + x0) * 3 + c] + cur[(y0 * cw + x1) * 3 + c] + cur[(y1 * cw + x0) * 3 + c] + cur[(y1 * cw + x1) * 3 + c]) * 0.25;
+    }
+    cw = nw; ch = nh; cur = o;
+  }
+  return levels;
+}
+async function loadHDRI(buf, name) {
+  const img = /\.hdr$/i.test(name) ? parseRadianceHDR(buf) : await decodeLDRPanorama(buf, name);
+  if (img.w < 4 || img.h < 2) throw new Error('That image is too small to be a panorama.');
+  const levels = buildHDRIMips(img);
+  if (!hdri.tex) hdri.tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, hdri.tex);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+  levels.forEach((L, i) => gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA16F, L.w, L.h, 0, gl.RGBA, gl.FLOAT, L.data));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, levels.length - 1);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  Object.assign(hdri, { name, w: levels[0].w, h: levels[0].h, levels: levels.length, origW: img.w, origH: img.h });
+  // average colour (from the 1 px level) tints the splat-free parts of the studio fallback too
+  const a = levels[levels.length - 1].data;
+  hdri.mean = [a[0], a[1], a[2]];
+}
+function clearHDRI() { if (hdri.tex) gl.deleteTexture(hdri.tex); hdri.tex = null; hdri.name = ''; }
+const hdriActive = () => !!hdri.tex;
+
+// full-screen backdrop, drawn first; direction comes from the inverse of projection × view (no translation)
+function drawBackdrop(proj, viewStage, vpH) {
+  const vr = new Float32Array(viewStage); vr[12] = vr[13] = vr[14] = 0;
+  const u = R.backdrop.u;
+  gl.useProgram(R.backdrop.p);
+  gl.uniformMatrix4fv(u.uInvVP, false, M4.invert(M4.mul(proj, vr)));
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, hdri.tex); gl.uniform1i(u.uEnv, 0);
+  gl.uniform2f(u.uRot, Math.cos(hdri.rot), Math.sin(hdri.rot));
+  const texelsPerPixel = (hdri.w / TAU) * (2 / (proj[5] * vpH));
+  gl.uniform1f(u.uLod, Math.max(0, Math.log2(Math.max(texelsPerPixel, 1e-6))) + hdri.blur);
+  gl.uniform1f(u.uIntensity, hdri.intensity);
+  gl.bindVertexArray(quadVAOs.backdrop);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
 /* ---------------- GLB vehicle: parse, upload, configure, draw ----------------
@@ -1283,6 +1453,12 @@ function drawGLB(a, list, proj, viewStage, camStage, light) {
   gl.uniform3fv(u.uSkyTop, light.top); gl.uniform3fv(u.uSkyHor, light.hor); gl.uniform3fv(u.uGround, light.ground);
   gl.uniform1f(u.uExposure, light.exposure);
   for (let k = 0; k < 5; k++) gl.uniform1i(u['t' + k], k);
+  const ibl = hdriActive() && hdri.light;
+  gl.uniform1i(u.uUseEnv, ibl ? 1 : 0); gl.uniform1i(u.tEnv, 5);
+  gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, ibl ? hdri.tex : whiteTex);
+  gl.uniform2f(u.uEnvRot, Math.cos(hdri.rot), Math.sin(hdri.rot));
+  gl.uniform1f(u.uEnvLod, hdri.levels - 1); gl.uniform1f(u.uEnvInt, hdri.intensity);
+  gl.uniform1f(u.uDirect, ibl ? 0 : 1); gl.uniform1f(u.uAmbK, ibl ? 1 : 0.45);
   gl.vertexAttrib4f(4, 1, 1, 1, 1);
   let cur = null, curFlip = null, curCull = null, curN = null;
   for (const d of list) {
@@ -1501,7 +1677,7 @@ const scene = {
   fallback: { variant: -1, acc: new Set(), accNodes: [] },
 };
 const stage = { pos: [0, 0, 0], yaw: 0, scale: 1 };
-const opts = { grid: true, shadow: true, exposure: 1, life: true, target: 'veh', xrTarget: 'all', fine: false, step: 0.05 };
+const opts = { showCar: true, showSplat: true, grid: true, shadow: true, exposure: 1, life: true, target: 'veh', xrTarget: 'all', fine: false, step: 0.05 };
 const SCALE_MIN = 1e-5, SCALE_MAX = 1e5;
 
 function trsMatrix(o) { return M4.mul(M4.mul(M4.trans(o.pos[0], o.pos[1], o.pos[2]), M4.rotY(o.yaw)), M4.scale(o.scale)); }
@@ -1638,19 +1814,21 @@ function drawGrid(proj, viewStage, centre, size, alpha) {
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 // per frame, before the eyes: vehicle matrices and glass sort order
-function prepareFrame(camStage) { if (scene.veh.glb) prepareGLB(scene.veh.glb, vehMatrix(), camStage); }
+function prepareFrame(camStage) { if (scene.veh.glb && opts.showCar) prepareGLB(scene.veh.glb, vehMatrix(), camStage); }
 function drawWorld(proj, view, vpW, vpH, o) {
   const viewStage = M4.mul(view, stageMatrix());
   const g = scene.veh.glb, rig = lightRig();
+  if (hdriActive() && hdri.show) { gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND); drawBackdrop(proj, viewStage, vpH); }
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true); gl.disable(gl.BLEND);
-  if (g) drawGLB(g, g.opaque, proj, viewStage, o.camStage, rig);
+  const car = g && opts.showCar;
+  if (car) drawGLB(g, g.opaque, proj, viewStage, o.camStage, rig);
   gl.depthMask(false); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  if (scene.env.set) { const envM = envMatrix(); drawSplats(proj, M4.mul(viewStage, envM), vpW, vpH, envM, o.maxPx); }
-  if (g && opts.shadow) drawShadow(proj, viewStage);
+  if (scene.env.set && opts.showSplat) { const envM = envMatrix(); drawSplats(proj, M4.mul(viewStage, envM), vpW, vpH, envM, o.maxPx); }
+  if (car && opts.shadow) drawShadow(proj, viewStage);
   if (opts.grid) drawGrid(proj, viewStage, o.gridC, o.gridSize, o.xr ? 0.4 : 0.6);
-  if (g) drawGLB(g, g.blend, proj, viewStage, o.camStage, rig);
+  if (car) drawGLB(g, g.blend, proj, viewStage, o.camStage, rig);
   gl.disable(gl.DEPTH_TEST); gl.depthMask(true);
-  if (o.xr) { drawPanel(proj, view); drawRays(proj, view); }
+  if (o.xr) { drawPanel(proj, view); drawBadge(proj, view); drawRays(proj, view); }
   gl.bindVertexArray(null);
 }
 
@@ -1709,7 +1887,7 @@ function frame(t) {
   proj[8] = -shift[0]; proj[9] = -shift[1];
   const eye = camEye(), view = M4.lookAt(eye, cam.target, [0, 1, 0]);
   const camStage = M4.apply(M4.invert(stageMatrix()), eye);
-  if (scene.env.set) requestSort(M4.mul(M4.mul(view, stageMatrix()), envMatrix()));
+  if (scene.env.set && opts.showSplat) requestSort(M4.mul(M4.mul(view, stageMatrix()), envMatrix()));
   prepareFrame(camStage);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.viewport(0, 0, w, h);
@@ -1926,8 +2104,10 @@ function xrFrame(t, frame) {
   if (!xr) return;
   const s = frame.session;
   s.requestAnimationFrame(xrFrame);
-  const dt = xr.last ? clamp((t - xr.last) / 1000, 0, 0.1) : 0.016;
+  const rawDt = xr.last ? (t - xr.last) / 1000 : 0.016, dt = clamp(rawDt, 0, 0.1);
   xr.last = t;
+  perf.acc += rawDt; perf.n++; perf.worst = Math.max(perf.worst, rawDt);
+  if (perf.acc > 0.5) { perf.fps = perf.n / perf.acc; perf.worstMs = perf.worst * 1000; perf.acc = 0; perf.n = 0; perf.worst = 0; paintBadge(); }
   const pose = frame.getViewerPose(xr.ref);
   if (!pose) return;
   const hp = pose.transform.position, hq = pose.transform.orientation;
@@ -1959,7 +2139,7 @@ function xrFrame(t, frame) {
   if (hoverKey !== panel.lastHover) { panel.lastHover = hoverKey; panel.dirty = true; }
   if (panel.dirty) paintPanel();
   const stageM = stageMatrix(), camStage = M4.apply(M4.invert(stageM), head.pos);
-  if (scene.env.set) requestSort(M4.mul(M4.mul(pose.transform.inverse.matrix, stageM), envMatrix()));
+  if (scene.env.set && opts.showSplat) requestSort(M4.mul(M4.mul(pose.transform.inverse.matrix, stageM), envMatrix()));
   prepareFrame(camStage);
   const layer = s.renderState.baseLayer;
   gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
@@ -1980,6 +2160,38 @@ function drawPanel(proj, view) {
   gl.uniformMatrix4fv(R.panel.u.uView, false, view);
   gl.uniform3fv(R.panel.u.uC, panel.c); gl.uniform3fv(R.panel.u.uR, panel.r); gl.uniform3fv(R.panel.u.uU, panel.u);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, panel.tex); gl.uniform1i(R.panel.u.uTex, 0);
+  gl.uniform1f(R.panel.u.uOpacity, 1);
+  gl.bindVertexArray(quadVAOs.panel);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+// small frame-rate badge above the panel's top-right corner (its own tiny texture, so updating it is cheap)
+const perf = { acc: 0, n: 0, worst: 0, fps: 0, worstMs: 0, cv: null, tex: null };
+function paintBadge() {
+  if (!perf.cv) { perf.cv = document.createElement('canvas'); perf.cv.width = 512; perf.cv.height = 96; perf.tex = gl.createTexture(); }
+  const x = perf.cv.getContext('2d');
+  x.clearRect(0, 0, 512, 96);
+  rr(x, 2, 2, 508, 92, 46); x.fillStyle = 'rgba(17,18,20,0.9)'; x.fill();
+  const good = perf.fps >= 55 && perf.worstMs < 40, ok = perf.fps >= 35;
+  x.lineWidth = 3; x.strokeStyle = good ? '#7fc98a' : ok ? '#e0b45c' : '#e8705c'; x.stroke();
+  x.fillStyle = PC.fg; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `600 40px ${PF.mono}`;
+  x.fillText(`${Math.round(perf.fps)} fps · worst ${Math.round(perf.worstMs)} ms`, 256, 50);
+  gl.bindTexture(gl.TEXTURE_2D, perf.tex);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, perf.cv);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+}
+function drawBadge(proj, view) {
+  if (!perf.tex || !panel.tex) return;
+  const nr = vnorm(panel.r), bw = 0.1, bh = 0.01875;
+  const c = vadd(vadd(panel.c, vmul(nr, panel.hw - bw)), [0, panel.hh + bh + 0.012, 0]);
+  gl.useProgram(R.panel.p);
+  gl.uniformMatrix4fv(R.panel.u.uProj, false, proj);
+  gl.uniformMatrix4fv(R.panel.u.uView, false, view);
+  gl.uniform3fv(R.panel.u.uC, c); gl.uniform3fv(R.panel.u.uR, vmul(nr, bw)); gl.uniform3fv(R.panel.u.uU, [0, bh, 0]);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, perf.tex); gl.uniform1i(R.panel.u.uTex, 0);
   gl.uniform1f(R.panel.u.uOpacity, 1);
   gl.bindVertexArray(quadVAOs.panel);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -2138,6 +2350,13 @@ function paintPanel() {
     pill(B.x + i * (tw + 14), B.y, tw, 72, 'tgt:' + id, opts.xrTarget === id, txt, () => { opts.xrTarget = id; syncAlign(); }, { disabled: id !== 'all' && !alignObj(id) });
   });
   B.y += 92;
+  label(B, 'Performance test · show or hide');
+  [['car', 'Car', opts.showCar, !!scene.veh.glb, () => { opts.showCar = !opts.showCar; syncPerf(); }],
+    ['splat', 'Splat', opts.showSplat, !!scene.env.set, () => { opts.showSplat = !opts.showSplat; syncPerf(); }],
+    ['hdri', 'HDRI backdrop', hdri.show, hdriActive(), () => { hdri.show = !hdri.show; syncHDRI(); }]].forEach(([id, txt, on, ok, act], i) => {
+    pill(B.x + i * (tw + 14), B.y, tw, 72, 'perf:' + id, on && ok, ok ? txt + (on ? ': on' : ': off') : 'No ' + txt.toLowerCase(), act, { disabled: !ok });
+  });
+  B.y += 92;
   const vw = (colW - 42) / 4;
   [['life', opts.life ? 'Life size' : 'Table-top', () => { opts.life = !opts.life; placeAll(); syncAlign(); }],
     ['fine', opts.fine ? 'Fine: on' : 'Fine: off', () => { opts.fine = !opts.fine; }],
@@ -2293,13 +2512,14 @@ ui.buildBody.addEventListener('change', (e) => {
 });
 
 /* ---------------- loading ---------------- */
-const kindOf = (name) => { const n = name.toLowerCase(); return /\.(glb)$/.test(n) ? 'veh' : /\.xml$/.test(n) ? 'cfg' : /\.json$/.test(n) ? 'align' : /\.(ply|splat|spz)$/.test(n) ? 'env' : null; };
+const kindOf = (name) => { const n = name.toLowerCase(); return /\.(hdr|jpe?g|png|webp)$/.test(n) ? 'hdri' : /\.(glb)$/.test(n) ? 'veh' : /\.xml$/.test(n) ? 'cfg' : /\.json$/.test(n) ? 'align' : /\.(ply|splat|spz)$/.test(n) ? 'env' : null; };
 async function loadFile(file) {
   const k = kindOf(file.name);
   if (k === 'veh') return loadVehicle(await file.arrayBuffer(), file.name);
   if (k === 'cfg') return loadConfig(await file.text(), file.name);
   if (k === 'align') { try { applyAlign(JSON.parse(await file.text())); toast('Alignment loaded.'); } catch (e) { toast('That alignment file couldn’t be read.'); } return; }
   if (k === 'env') return loadEnv(await file.arrayBuffer(), file.name);
+  if (k === 'hdri') return loadBackdrop(await file.arrayBuffer(), file.name);
   toast(`${file.name} isn’t a splat, .glb, .xml or alignment .json file.`);
 }
 async function loadEnv(buf, name) {
@@ -2358,7 +2578,7 @@ function loadConfig(text, name) {
   }
 }
 function afterSceneChange() { syncAlign(); syncBuild(); updateStats(); panel.dirty = true; if (xr) placeAll(); }
-for (const inp of [ui.envFile, ui.vehFile, ui.cfgFile, $('alignFile')]) inp.addEventListener('change', async () => { for (const f of [...inp.files]) await loadFile(f); inp.value = ''; });
+for (const inp of [ui.envFile, ui.vehFile, ui.cfgFile, $('hdriFile'), $('alignFile')]) inp.addEventListener('change', async () => { for (const f of [...inp.files]) await loadFile(f); inp.value = ''; });
 ui.urlForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = ui.url.value.trim();
@@ -2371,6 +2591,7 @@ ui.urlForm.addEventListener('submit', async (e) => {
   const k = kindOf(name) || 'env';
   if (k === 'veh') await loadVehicle(await res.arrayBuffer(), name);
   else if (k === 'cfg') loadConfig(await res.text(), name);
+  else if (k === 'hdri') await loadBackdrop(await res.arrayBuffer(), name);
   else await loadEnv(await res.arrayBuffer(), name);
 });
 ui.envClear.addEventListener('click', () => {
@@ -2397,7 +2618,7 @@ window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', async (e) => {
   e.preventDefault(); dragDepth = 0; ui.drop.hidden = true;
   const files = [...(e.dataTransfer?.files || [])];
-  const order = { cfg: 0, veh: 1, env: 2, align: 3 };
+  const order = { cfg: 0, veh: 1, env: 2, hdri: 3, align: 4 };
   files.sort((a, b) => (order[kindOf(a.name)] ?? 9) - (order[kindOf(b.name)] ?? 9));
   for (const f of files) await loadFile(f);
 });
@@ -2413,6 +2634,7 @@ function alignState() {
   const e = scene.env, v = scene.veh;
   return {
     environment: e.set ? { file: e.name, position: e.pos.map(r4), turnDegrees: r4((e.yaw * 180) / Math.PI), scale: +e.scale.toPrecision(7), orientation: Array.from(e.rot).map((x) => Math.round(x)), centreOffset: e.offset.map((x) => +x.toPrecision(7)), trimRadius: r4(e.crop) } : null,
+    backdrop: hdri.tex ? { file: hdri.name, rotationDegrees: Math.round((hdri.rot * 180) / Math.PI), brightness: +hdri.intensity.toPrecision(4), blur: hdri.blur, show: hdri.show, light: hdri.light } : null,
     vehicle: v.glb ? { file: v.name, position: v.pos.map(r4), turnDegrees: r4((v.yaw * 180) / Math.PI), scale: +v.scale.toPrecision(7) } : null,
   };
 }
@@ -2425,6 +2647,13 @@ function applyAlign(a, only) {
     e.scale = clamp(num(s.scale, e.scale), SCALE_MIN, SCALE_MAX); e.crop = Math.max(0, num(s.trimRadius, 0));
     if (Array.isArray(s.orientation) && s.orientation.length === 16) { e.rot = new Float32Array(s.orientation); centreEnv(); }
     if (v3(s.centreOffset, null)) e.offset = s.centreOffset.slice();
+  }
+  if (a && a.backdrop && hdri.tex && !only) {
+    const b = a.backdrop;
+    hdri.rot = (num(b.rotationDegrees, 0) * Math.PI) / 180; hdri.intensity = clamp(num(b.brightness, 1), 0.01, 20); hdri.blur = clamp(num(b.blur, 0), 0, 6);
+    if (typeof b.show === 'boolean') hdri.show = b.show;
+    if (typeof b.light === 'boolean') hdri.light = b.light;
+    syncHDRI();
   }
   if (a && a.vehicle && scene.veh.glb && only !== 'env') {
     const s = a.vehicle, v = scene.veh;
@@ -2565,7 +2794,7 @@ function boot() {
   try {
     GPU.maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     buildPrograms();
-    quadVAOs = { shadow: quadVAO(), grid: quadVAO(), panel: quadVAO() };
+    quadVAOs = { shadow: quadVAO(), grid: quadVAO(), panel: quadVAO(), backdrop: quadVAO() };
     lineVAO = gl.createVertexArray(); gl.bindVertexArray(lineVAO);
     lineBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
@@ -2580,7 +2809,52 @@ function boot() {
   detectXR();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { panel.dirty = true; });
 }
-window.__viewer = { scene, stage, opts, cam, GPU, sorter, panel, head, loadEnv, loadVehicle, loadConfig, applyAlign, alignState, get xr() { return xr; }, paintPanel, buttonAt, chooseOption };
+window.__viewer = { scene, stage, opts, cam, GPU, sorter, panel, head, loadEnv, loadVehicle, loadConfig, applyAlign, alignState, get xr() { return xr; }, paintPanel, buttonAt, chooseOption, hdri, loadBackdrop };
+
+/* ---------------- HDRI backdrop ---------------- */
+const HDRI_KEY = 'hdri:';
+async function loadBackdrop(buf, name) {
+  const st = $('hdriStatus');
+  st.innerHTML = `Reading <strong>${esc(name)}</strong>…`;
+  await nextFrame();
+  try {
+    const t0 = performance.now();
+    await loadHDRI(buf, name);
+    const saved = store.get(HDRI_KEY + name);
+    Object.assign(hdri, { rot: 0, intensity: 1, blur: 0, show: true, light: true }, saved || {});
+    $('hdriName').textContent = name; $('hdriClear').hidden = false; $('hdriCtl').hidden = false;
+    const ldr = !/\.hdr$/i.test(name);
+    st.innerHTML = `Loaded ${hdri.origW}×${hdri.origH} in ${((performance.now() - t0) / 1000).toFixed(1)} s.` + (ldr ? ' This is an ordinary image, so reflections will be flatter than with a true .hdr.' : '');
+    syncHDRI();
+  } catch (err) {
+    st.innerHTML = `<strong>Couldn’t open ${esc(name)}.</strong> ${esc(err && err.message ? err.message : String(err))}`;
+  }
+}
+function syncHDRI() {
+  const on = hdriActive();
+  $('hdriShow').checked = hdri.show; $('hdriLight').checked = hdri.light;
+  const deg = Math.round((((hdri.rot * 180) / Math.PI) % 360 + 360) % 360);
+  $('hdriRot').value = String(deg); $('hdriRotOut').textContent = deg + '°';
+  $('hdriInt').value = String(Math.log2(hdri.intensity)); $('hdriIntOut').textContent = hdri.intensity.toFixed(2);
+  $('hdriBlur').value = String(hdri.blur); $('hdriBlurOut').textContent = hdri.blur < 0.05 ? 'Sharp' : hdri.blur.toFixed(1);
+  if (on) store.set(HDRI_KEY + hdri.name, { rot: hdri.rot, intensity: hdri.intensity, blur: hdri.blur, show: hdri.show, light: hdri.light });
+  panel.dirty = true;
+  if (ui.alignText !== document.activeElement) ui.alignText.value = JSON.stringify(alignState(), null, 1);
+}
+$('hdriShow').addEventListener('change', () => { hdri.show = $('hdriShow').checked; syncHDRI(); });
+$('hdriLight').addEventListener('change', () => { hdri.light = $('hdriLight').checked; syncHDRI(); });
+$('hdriRot').addEventListener('input', () => { hdri.rot = (parseFloat($('hdriRot').value) * Math.PI) / 180; syncHDRI(); });
+$('hdriInt').addEventListener('input', () => { hdri.intensity = Math.pow(2, parseFloat($('hdriInt').value)); syncHDRI(); });
+$('hdriBlur').addEventListener('input', () => { hdri.blur = parseFloat($('hdriBlur').value); syncHDRI(); });
+$('hdriClear').addEventListener('click', () => {
+  clearHDRI();
+  $('hdriName').textContent = 'None loaded'; $('hdriStatus').textContent = ''; $('hdriClear').hidden = true; $('hdriCtl').hidden = true;
+  panel.dirty = true;
+});
+/* ---------------- performance toggles ---------------- */
+function syncPerf() { $('showCarChk').checked = opts.showCar; $('showSplatChk').checked = opts.showSplat; panel.dirty = true; }
+$('showCarChk').addEventListener('change', () => { opts.showCar = $('showCarChk').checked; syncPerf(); });
+$('showSplatChk').addEventListener('change', () => { opts.showSplat = $('showSplatChk').checked; syncPerf(); });
 boot();
 
 })();
