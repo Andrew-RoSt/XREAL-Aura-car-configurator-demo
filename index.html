@@ -1802,6 +1802,7 @@ function placeAll() {
   // put the vehicle's footprint centre (and floor) on the target
   const c = M4.apply(M4.mul(M4.rotY(stage.yaw), M4.scale(stage.scale)), [fb.c[0], fb.min[1], fb.c[2]]);
   stage.pos = vsub(target, c);
+  panel.pinned = false; panel.drag = null;
   placePanel(yaw);
 }
 function placePanel(yaw) {
@@ -1843,11 +1844,16 @@ function onSelectStart(e) {
   const ray = rayOf(e.frame, e.inputSource);
   if (!ray) return;
   const hit = panelHit(ray.o, ray.d);
-  if (hit) { const b = buttonAt(hit.x, hit.y); if (b) { b.act(); Sound.click(); panel.dirty = true; } return; }
+  if (hit) {
+    const b = buttonAt(hit.x, hit.y);
+    if (b && b.id === 'panel:move') { panel.drag = { src: e.inputSource, t: hit.t, off: vsub(panel.c, hit.p) }; Sound.click(); panel.dirty = true; return; }
+    if (b) { b.act(); Sound.click(); panel.dirty = true; }
+    return;
+  }
   const g = gripOf(e.frame, e.inputSource);
   if (g) grabs.set(e.inputSource, { last: g, cur: g });
 }
-function onSelectEnd(e) { grabs.delete(e.inputSource); }
+function onSelectEnd(e) { grabs.delete(e.inputSource); if (panel.drag && panel.drag.src === e.inputSource) { panel.drag = null; panel.dirty = true; } }
 function grabWhich() { return alignObj(opts.xrTarget) ? opts.xrTarget : 'all'; }
 function updateGrabs(frame) {
   for (const [src, g] of grabs) { const p = gripOf(frame, src); if (p) g.cur = p; }
@@ -1932,6 +1938,14 @@ function xrFrame(t, frame) {
   for (const src of s.inputSources) {
     const ray = rayOf(frame, src);
     if (!ray) continue;
+    if (panel.drag && panel.drag.src === src) {
+      const p = vadd(ray.o, vmul(ray.d, panel.drag.t));
+      setPanelPose(vadd(p, panel.drag.off));
+      panel.pinned = true;
+      rays.push({ o: ray.o, e: p, on: true, grab: false });
+      panel.hover = 'panel:move';
+      continue;
+    }
     const hit = panelHit(ray.o, ray.d);
     if (hit) { const b = buttonAt(hit.x, hit.y); if (b) panel.hover = b.id; }
     rays.push({ o: ray.o, e: hit ? hit.p : vadd(ray.o, vmul(ray.d, 2.5)), on: !!hit, grab: grabs.has(src) });
@@ -1940,7 +1954,7 @@ function xrFrame(t, frame) {
   // keep the panel near where you're looking
   const off = Math.abs(((headYaw() - panel.yaw + Math.PI * 3) % TAU) - Math.PI);
   panel.offFor = off > 1.1 ? panel.offFor + dt : 0;
-  if (panel.offFor > 1.5) placePanel(headYaw());
+  if (panel.offFor > 1.5 && !panel.pinned && !panel.drag) placePanel(headYaw());
   const hoverKey = panel.hover || '';
   if (hoverKey !== panel.lastHover) { panel.lastHover = hoverKey; panel.dirty = true; }
   if (panel.dirty) paintPanel();
@@ -2019,8 +2033,27 @@ function paintPanel() {
   const cfg = scene.cfg, g = scene.veh.glb;
   const names = cfg ? cfgNames(cfg, scene.sel) : new Set();
 
+  /* top bar: drag handle and exit */
+  {
+    const exW = 250, hx = 56, hw = W - 112 - exW - 16, by = 36, bh = 76, id = 'panel:move', active = !!panel.drag;
+    rr(x, hx, by, hw, bh, 18);
+    x.fillStyle = active ? 'rgba(201,180,138,0.38)' : hov(id) ? 'rgba(201,180,138,0.24)' : 'rgba(240,235,225,0.06)'; x.fill();
+    x.setLineDash([10, 8]); x.lineWidth = 2; x.strokeStyle = 'rgba(201,180,138,0.55)'; x.stroke(); x.setLineDash([]);
+    x.fillStyle = PC.sand;
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) { x.beginPath(); x.arc(hx + 34 + c * 14, by + 28 + r * 20, 4.5, 0, TAU); x.fill(); }
+    x.textAlign = 'left'; x.fillStyle = PC.fg; x.font = `600 27px ${PF.display}`;
+    x.fillText(active ? 'Moving… let go to drop the panel here' : 'Pinch and hold here to move this panel', hx + 92, by + 48);
+    btns.push({ id, x: hx, y: by, w: hw, h: bh, act: () => {} });
+    const ex = W - 56 - exW, eid = 'xr:exit';
+    rr(x, ex, by, exW, bh, 38);
+    x.fillStyle = hov(eid) ? 'rgba(232,110,92,0.55)' : 'rgba(232,110,92,0.25)'; x.fill();
+    x.lineWidth = 2; x.strokeStyle = 'rgba(232,110,92,0.8)'; x.stroke();
+    x.fillStyle = PC.fg; x.textAlign = 'center'; x.font = `700 28px ${PF.display}`; x.fillText('Exit glasses', ex + exW / 2, by + 48);
+    btns.push({ id: eid, x: ex, y: by, w: exW, h: bh, act: () => { if (xr) xr.session.end().catch(() => {}); } });
+  }
+
   /* column A: title and choices */
-  A.y = 56;
+  A.y = 140;
   x.textAlign = 'left'; x.fillStyle = PC.sand; x.font = `600 24px ${PF.mono}`; x.fillText('CONFIGURATOR', A.x, A.y + 20); A.y += 34;
   const title = cfg ? cfg.name : g ? g.name.replace(/\.glb$/i, '') : 'No vehicle loaded';
   x.fillStyle = PC.fg; x.fillText(fitText(x, title.toUpperCase(), colW, 60, 800, PF.display, 30), A.x, A.y + 52); A.y += 72;
@@ -2079,7 +2112,7 @@ function paintPanel() {
   }
 
   /* column B: accessories, alignment, view */
-  B.y = 56;
+  B.y = 140;
   const toggles = [];
   if (cfg) for (const gr of toggleGroups) toggles.push({ title: gr.title, items: gr.options.filter((o) => !o.isNone).map((o) => ({ id: 'opt:' + gr.name + ':' + o.name, name: o.title, on: scene.sel.get(gr.name).has(o.name), ok: cfgAvailable(o, names), act: () => chooseOption(gr.name, o.name) })) });
   else if (g && scene.fallback.accNodes.length) toggles.push({ title: 'Accessories', items: scene.fallback.accNodes.map((n) => ({ id: 'acc:' + n, name: accLabel(n), on: scene.fallback.acc.has(n), ok: true, act: () => toggleFallbackAcc(n) })) });
@@ -2118,8 +2151,8 @@ function paintPanel() {
   });
   B.y += 100;
   x.textAlign = 'left'; x.fillStyle = PC.muted; x.font = `500 23px ${PF.display}`;
-  x.fillText('Pinch and drag to move. Pinch with both hands to resize or turn.', B.x, B.y + 20);
-  x.fillText('Fine slows everything down for exact alignment.', B.x, B.y + 52);
+  x.fillText('Pinch and drag in space to move. Both hands to resize or turn.', B.x, B.y + 20);
+  x.fillText('Fine slows that down. Re-centre also brings this panel back.', B.x, B.y + 52);
   B.y += 70;
 
   /* composite onto a card sized to the content */
@@ -2128,7 +2161,7 @@ function paintPanel() {
   if (out.height !== H) out.height = H;
   o.clearRect(0, 0, W, H);
   rr(o, 4, 4, W - 8, H - 8, 36); o.fillStyle = 'rgba(17,18,20,0.9)'; o.fill(); o.lineWidth = 3; o.strokeStyle = 'rgba(201,180,138,0.55)'; o.stroke();
-  o.strokeStyle = 'rgba(201,180,138,0.25)'; o.lineWidth = 2; o.beginPath(); o.moveTo(B.x - 20, 40); o.lineTo(B.x - 20, H - 40); o.stroke();
+  o.strokeStyle = 'rgba(201,180,138,0.25)'; o.lineWidth = 2; o.beginPath(); o.moveTo(B.x - 20, 140); o.lineTo(B.x - 20, H - 40); o.stroke();
   o.drawImage(panel.cv, 0, 0, W, H, 0, 0, W, H);
   panel.H = H; panel.hh = (panel.hw * H) / W; panel.buttons = btns;
   setPanelPose(panel.c);
